@@ -38,6 +38,13 @@ angular.module('ionic.services.core', [])
         return this.getValue('api_server');
       },
 
+      getApiEndpoint: function(service) {
+        var app = this.getApp();
+        if(!app) return null;
+
+        return this.getApiUrl() + '/api/v1/' + app.app_id + '/' + service;
+      },
+
       /**
        * Get the registered app for all commands.
        */
@@ -49,4 +56,4 @@ angular.module('ionic.services.core', [])
 });
 
 // Backwards compat
-.module('ionic.services.common', ['ionic.services.core'])
+angular.module('ionic.services.common', ['ionic.services.core']);

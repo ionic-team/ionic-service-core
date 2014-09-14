@@ -29,6 +29,10 @@ angular.module('ionic.services.core', [])
     settings[k] = v;
   };
 
+  this.setApiServer = function(server) {
+    settings.api_server = server;
+  };
+
   this.$get = [function() {
     return {
       getValue: function(k) {

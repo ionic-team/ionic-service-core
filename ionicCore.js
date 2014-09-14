@@ -1,4 +1,4 @@
-angular.module('ionic.services.common', [])
+angular.module('ionic.services.core', [])
 
 /**
  * A core Ionic account identity provider. 
@@ -27,3 +27,6 @@ angular.module('ionic.services.common', [])
     }
   }];
 });
+
+// Backwards compat
+.module('ionic.services.common', ['ionic.services.core'])

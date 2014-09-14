@@ -38,6 +38,12 @@ angular.module('ionic.services.core', [])
       getValue: function(k) {
         return settings[k];
       },
+      getApiWriteKey: function() {
+        return app.api_write_key;
+      },
+      getApiReadKey: function() {
+        return app.api_read_key;
+      },
       getApiUrl: function() {
         return this.getValue('api_server');
       },

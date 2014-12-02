@@ -64,6 +64,3 @@ angular.module('ionic.services.core', [])
     }
   }];
 });
-
-// Backwards compat
-angular.module('ionic.services.common', ['ionic.services.core']);

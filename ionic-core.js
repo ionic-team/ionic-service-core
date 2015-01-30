@@ -1,10 +1,10 @@
-angular.module('ionic.services.core', [])
+angular.module('ionic.service.core', [])
 
 /**
  * A core Ionic account identity provider. 
  *
  * Usage:
- * angular.module('myApp', ['ionic', 'ionic.services.common'])
+ * angular.module('myApp', ['ionic', 'ionic.service.core'])
  * .config(['$ionicAppProvider', function($ionicAccountProvider) {
  *   $ionicAppProvider.identify({
  *     app_id: 'x34dfxjydi23dx'
@@ -15,7 +15,8 @@ angular.module('ionic.services.core', [])
   var app = {};
 
   var settings = {
-    'api_server': 'http://ionic.io'
+    'api_server': 'https://ionic.io',
+    'push_api_server': 'https://push.ionic.io/
   };
 
   this.identify = function(opts) {

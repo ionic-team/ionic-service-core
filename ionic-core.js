@@ -37,10 +37,13 @@ angular.module('ionic.service.core', [])
   this.$get = [function() {
     return {
       getId: function() {
-        return this.getValue('app_id');
+        return this.getAppValue('app_id');
       },
       getValue: function(k) {
         return settings[k];
+      },
+      getAppValue: function(k) {
+        return app[k];
       },
       getApiWriteKey: function() {
         return app.api_write_key;
@@ -52,7 +55,7 @@ angular.module('ionic.service.core', [])
         return this.getValue('api_server');
       },
       getApiKey: function() {
-        return this.getValue('api_key');
+        return this.getAppValue('api_key');
       },
       getApiEndpoint: function(service) {
         var app = this.getApp();

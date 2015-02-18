@@ -16,7 +16,7 @@ angular.module('ionic.service.core', [])
 
   var settings = {
     'api_server': 'https://ionic.io',
-    'push_api_server': 'https://push.ionic.io/'
+    'push_api_server': 'https://push.ionic.io'
   };
 
   this.identify = function(opts) {
@@ -37,7 +37,7 @@ angular.module('ionic.service.core', [])
   this.$get = [function() {
     return {
       getId: function() {
-        return this.getValue('app_id');
+        return app.app_id;
       },
       getValue: function(k) {
         return settings[k];
@@ -52,7 +52,7 @@ angular.module('ionic.service.core', [])
         return this.getValue('api_server');
       },
       getApiKey: function() {
-        return this.getValue('api_key');
+        return app.api_key;
       },
       getApiEndpoint: function(service) {
         var app = this.getApp();

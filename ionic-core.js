@@ -15,7 +15,7 @@ angular.module('ionic.service.core', [])
   var app = {};
 
   var settings = {
-    'api_server': 'https://ionic.io',
+    'api_server': 'https://apps.ionic.io',
     'push_api_server': 'https://push.ionic.io'
   };
 

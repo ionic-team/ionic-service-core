@@ -272,8 +272,42 @@ function($q, $timeout, $http, persistentStorage, $ionicApp) {
     return false;
   }
 
+  // Get the sub object for the given dotted key (author.title)
+  function getObjForKey(obj, key) {
+    var parts = key.split('.');
+
+    var o = obj;
+    for(var i = 0; i < parts.length; i++) {
+      o = obj[parts[i]];
+    }
+    return o;
+  }
 
   return {
+    /**
+     * Push a value to the array with the given key.
+     */
+    push: function(key, value) {
+      var u = user.user_id;
+      if(!u) {
+        throw new Error("Please call identify with a user_id before calling push");
+      }
+      var o = {};
+      o['user_id'] = u;
+      o[key] = value;
+      return $http.post($ionicApp.getApiUrl() + '/api/v1/app/' + $ionicApp.getId() + '/users/push', o);
+    },
+    set: function(key, value) {
+      var u = user.user_id;
+      if(!u) {
+        throw new Error("Please call identify with a user_id before calling set");
+      }
+
+      var o = {};
+      o['user_id'] = u;
+      o[key] = value;
+      return $http.post($ionicApp.getApiUrl() + '/api/v1/app/' + $ionicApp.getId() + '/users/set', o);
+    },
     identify: function(userData) {
       if (userData._id) {
         var msg = 'You cannot override the _id property on users.';
@@ -281,8 +315,7 @@ function($q, $timeout, $http, persistentStorage, $ionicApp) {
       }
 
       if(!userData.user_id) {
-        var msg = 'You must provide a user_id field that is unique for the user in your system.';
-        throw new Error(msg)
+        userData.user_id = generateGuid();
       }
 
       // Copy all the data into our user object

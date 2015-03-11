@@ -263,26 +263,6 @@ function($q, $timeout, $http, persistentStorage, $ionicApp) {
     });
   }
 
-  function storeOrDirty(key, value) {
-    // Store the key on the user object and return whether something changed
-    if (!angular.equals(user[key], value)) {
-      user[key] = value;
-      return true;
-    }
-    return false;
-  }
-
-  // Get the sub object for the given dotted key (author.title)
-  function getObjForKey(obj, key) {
-    var parts = key.split('.');
-
-    var o = obj;
-    for(var i = 0; i < parts.length; i++) {
-      o = obj[parts[i]];
-    }
-    return o;
-  }
-
   return {
     /**
      * Push a value to the array with the given key.
@@ -314,9 +294,16 @@ function($q, $timeout, $http, persistentStorage, $ionicApp) {
         throw new Error(msg)
       }
 
+      if (!userData.user_id) {
+        var msg = 'You must supply a unique user_id field.';
+        throw new Error(msg)
+      }
+
+      /*
       if(!userData.user_id) {
         userData.user_id = generateGuid();
       }
+      */
 
       // Copy all the data into our user object
       angular.extend(user, userData);

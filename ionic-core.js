@@ -263,6 +263,15 @@ function($q, $timeout, $http, persistentStorage, $ionicApp) {
     });
   }
 
+  function storeOrDirty(key, value) {
+    // Store the key on the user object and return whether something changed
+    if (!angular.equals(user[key], value)) {
+      user[key] = value;
+      return true;
+    }
+    return false;
+  }
+
   return {
     /**
      * Push a value to the array with the given key.

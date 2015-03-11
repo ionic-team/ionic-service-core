@@ -275,8 +275,12 @@ function($q, $timeout, $http, persistentStorage, $ionicApp) {
   return {
     /**
      * Push a value to the array with the given key.
+     * @param key the key
+     * @param value the value
+     * @param isUnique whether to only push if it doesn't exist in the set
+     *
      */
-    push: function(key, value) {
+    push: function(key, value, isUnique) {
       var u = user.user_id;
       if(!u) {
         throw new Error("Please call identify with a user_id before calling push");
@@ -284,7 +288,12 @@ function($q, $timeout, $http, persistentStorage, $ionicApp) {
       var o = {};
       o['user_id'] = u;
       o[key] = value;
-      return $http.post($ionicApp.getApiUrl() + '/api/v1/app/' + $ionicApp.getId() + '/users/push', o);
+
+      if(isUnique) {
+        return $http.post($ionicApp.getApiUrl() + '/api/v1/app/' + $ionicApp.getId() + '/users/pushUnique', o);
+      } else {
+        return $http.post($ionicApp.getApiUrl() + '/api/v1/app/' + $ionicApp.getId() + '/users/push', o);
+      }
     },
     set: function(key, value) {
       var u = user.user_id;

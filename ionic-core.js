@@ -280,7 +280,8 @@ function($q, $timeout, $http, persistentStorage, $ionicApp) {
      * @param isUnique whether to only push if it doesn't exist in the set
      *
      */
-    push: function(key, value, isUnique) {
+
+    _op: function(key, value, type) {
       var u = user.user_id;
       if(!u) {
         throw new Error("Please call identify with a user_id before calling push");
@@ -289,22 +290,23 @@ function($q, $timeout, $http, persistentStorage, $ionicApp) {
       o['user_id'] = u;
       o[key] = value;
 
+      return $http.post($ionicApp.getApiUrl() + '/api/v1/app/' + $ionicApp.getId() + '/users/' + type, o);
+    },
+    push: function(key, value, isUnique) {
       if(isUnique) {
-        return $http.post($ionicApp.getApiUrl() + '/api/v1/app/' + $ionicApp.getId() + '/users/pushUnique', o);
+        return this._op(key, value, 'pushUnique');
       } else {
-        return $http.post($ionicApp.getApiUrl() + '/api/v1/app/' + $ionicApp.getId() + '/users/push', o);
+        return this._op(key, value, 'push');
       }
     },
+    pull: function(key, value) {
+      return this._op(key, value, 'pull');
+    },
     set: function(key, value) {
-      var u = user.user_id;
-      if(!u) {
-        throw new Error("Please call identify with a user_id before calling set");
-      }
-
-      var o = {};
-      o['user_id'] = u;
-      o[key] = value;
-      return $http.post($ionicApp.getApiUrl() + '/api/v1/app/' + $ionicApp.getId() + '/users/set', o);
+      return this._op(key, value, 'set');
+    },
+    unset: function(key, value) {
+      return this._op(key, value, 'unset');
     },
     identify: function(userData) {
       if (userData._id) {

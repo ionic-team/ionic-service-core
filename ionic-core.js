@@ -305,8 +305,8 @@ function($q, $timeout, $http, persistentStorage, $ionicApp) {
     set: function(key, value) {
       return this._op(key, value, 'set');
     },
-    unset: function(key, value) {
-      return this._op(key, value, 'unset');
+    unset: function(key) {
+      return this._op(key, '', 'unset');
     },
     identify: function(userData) {
       if (userData._id) {

@@ -308,6 +308,9 @@ function($q, $timeout, $http, persistentStorage, $ionicApp) {
     unset: function(key) {
       return this._op(key, '', 'unset');
     },
+    generateGUID: function() {
+      return generateGuid();
+    },
     identify: function(userData) {
       if (userData._id) {
         var msg = 'You cannot override the _id property on users.';

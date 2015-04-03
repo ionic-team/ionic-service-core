@@ -312,10 +312,12 @@ function($q, $timeout, $http, persistentStorage, $ionicApp) {
       return generateGuid();
     },
     identify: function(userData) {
+      /*
       if (userData._id) {
         var msg = 'You cannot override the _id property on users.';
         throw new Error(msg)
       }
+      */
 
       if (!userData.user_id) {
         var msg = 'You must supply a unique user_id field.';

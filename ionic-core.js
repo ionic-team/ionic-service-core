@@ -241,15 +241,12 @@ function($q, $timeout, $http, persistentStorage, $ionicApp) {
   if (deviceCordova.model) device.model = deviceCordova.model;
   if (deviceCordova.platform) device.platform = deviceCordova.platform;
   if (deviceCordova.version) device.version = deviceCordova.version;
+  if (deviceCordova.uuid) device.uuid = deviceCordova.uuid;
 
   // Flag if we've changed anything on our user
   var dirty = false;
   dirty = storeOrDirty('is_on_device', ionic.Platform.isWebView());
   dirty = storeOrDirty('device', device);
-  if (!user._id) {
-    user._id = generateGuid();
-    dirty = true;
-  }
 
   if (dirty) {
       persistentStorage.storeObject(storageKeyName, user);
@@ -312,23 +309,10 @@ function($q, $timeout, $http, persistentStorage, $ionicApp) {
       return generateGuid();
     },
     identify: function(userData) {
-      /*
-      if (userData._id) {
-        var msg = 'You cannot override the _id property on users.';
-        throw new Error(msg)
-      }
-      */
-
       if (!userData.user_id) {
         var msg = 'You must supply a unique user_id field.';
         throw new Error(msg)
       }
-
-      /*
-      if(!userData.user_id) {
-        userData.user_id = generateGuid();
-      }
-      */
 
       // Copy all the data into our user object
       angular.extend(user, userData);

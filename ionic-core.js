@@ -247,6 +247,10 @@ function($q, $timeout, $http, persistentStorage, $ionicApp) {
   var dirty = false;
   dirty = storeOrDirty('is_on_device', ionic.Platform.isWebView());
   dirty = storeOrDirty('device', device);
+  if (!user._id) {
+    user._id = generateGuid();
+    dirty = true;
+  }
 
   if (dirty) {
       persistentStorage.storeObject(storageKeyName, user);

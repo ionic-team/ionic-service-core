@@ -293,6 +293,11 @@ function($q, $timeout, $http, persistentStorage, $ionicApp) {
 
       return $http.post($ionicApp.getApiUrl() + '/api/v1/app/' + $ionicApp.getId() + '/users/' + type, o);
     },
+    /**
+     * Push the given value into the array field identified by the key.
+     * Pass true to isUnique to only push the value if the value does not
+     * already exist in the array.
+     */
     push: function(key, value, isUnique) {
       if(isUnique) {
         return this._op(key, value, 'pushUnique');
@@ -300,12 +305,22 @@ function($q, $timeout, $http, persistentStorage, $ionicApp) {
         return this._op(key, value, 'push');
       }
     },
+    /**
+     * Pull a given value out of the array identified by key.
+     */
     pull: function(key, value) {
       return this._op(key, value, 'pull');
     },
+    /**
+     * Set the given value under the key in the user. This overwrites
+     * any other data under that field. To append data to list, use push above.
+     */
     set: function(key, value) {
       return this._op(key, value, 'set');
     },
+    /**
+     * Remove the field for the given key.
+     */
     unset: function(key) {
       return this._op(key, '', 'unset');
     },

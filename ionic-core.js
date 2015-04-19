@@ -141,32 +141,10 @@ angular.module('ionic.service.core', [])
   };
 
   this.identify = function(opts) {
-    if (!opts.gcm_id){
-      opts.gcm_id = 'None';
-    }
-    if (opts.app_id && opts.api_key) {
-      app = opts;
-      // Angular $http isn't defined at this point, so we need to get it.
-      var initInjector = angular.injector(['ng']);
-      var $http = initInjector.get('$http');
-
-      // Request the write key for this app.
-      var req = {
-        method: 'GET',
-        url: settings.api_server + '/api/v1/app/' + opts.app_id + '/keys/write',
-        headers: {
-          'Authorization': "basic " + btoa(opts.app_id + ':' + opts.api_key)
-        }
-      };
-      $http(req).then(function(resp){
-        var writeKey = JSON.parse(resp.data).write_key;
-        console.log("Got write key: " + writeKey);
-        opts.api_write_key = writeKey;
-
-      }, function(err){
-        console.log('Error grabbing write key, continuing without.');
-      });
-    }
+  if (!opts.gcm_id){
+    opts.gcm_id = 'None';
+  }
+    app = opts;
   };
 
   /**

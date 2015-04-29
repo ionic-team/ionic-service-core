@@ -140,6 +140,37 @@ angular.module('ionic.service.core', [])
     'push_api_server': 'https://push.ionic.io'
   };
 
+  var _is_cordova_available = function() {
+
+    console.log('Ionic Core: searching for cordova.js');
+
+    try {
+      if (window.cordova || cordova) {
+        console.log('Ionic Core: cordova.js has already been loaded');
+        return true;
+      }
+    } catch(e) {}
+
+    var scripts = document.getElementsByTagName('script');
+    var len = scripts.length;
+    for(var i = 0; i < len; i++) {
+      var script = scripts[i].getAttribute('src');
+      if(script) {
+        var parts = script.split('/');
+        var partsLength = 0;
+        try {
+          partsLength = parts.length;
+          if (parts[partsLength-1] === 'cordova.js') {
+            console.log('Ionic Core: cordova.js has previously been included.');
+            return true;
+          }
+        } catch(e) {}
+      }
+    }
+
+    return false;
+  };
+
   this.identify = function(opts) {
   if (!opts.gcm_id){
     opts.gcm_id = 'None';
@@ -187,6 +218,33 @@ angular.module('ionic.service.core', [])
        */
       getApp: function() {
         return app;
+      },
+
+      getDeviceTypeByNavigator: function() {
+        return (navigator.userAgent.match(/iPad/i))  == "iPad" ? "ipad" : (navigator.userAgent.match(/iPhone/i))  == "iPhone" ? "iphone" : (navigator.userAgent.match(/Android/i)) == "Android" ? "android" : (navigator.userAgent.match(/BlackBerry/i)) == "BlackBerry" ? "blackberry" : "unknown";
+      },
+
+      loadCordova: function() {
+        if(!_is_cordova_available()) {
+          var cordova_script = document.createElement('script');
+          var cordova_src = 'cordova.js';
+          switch(this.getDeviceTypeByNavigator()) {
+            case 'android':
+              cordova_src = 'file:///android_asset/www/cordova.js'
+              break;
+
+            case 'unknown':
+            default:
+              return false;
+          }
+          cordova_script.setAttribute('src', cordova_src);
+          document.head.appendChild(cordova_script);
+          console.log('Ionic Core: injecting cordova.js');
+        }
+      },
+
+      bootstrap: function() {
+        this.loadCordova();
       }
     }
   }];
@@ -340,3 +398,8 @@ function($q, $timeout, $http, persistentStorage, $ionicApp) {
     }
   }
 }])
+
+.run(['$ionicApp', function($ionicApp) {
+  console.log('Ionic Core: init');
+  $ionicApp.bootstrap();
+}]);

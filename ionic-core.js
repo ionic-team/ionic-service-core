@@ -234,8 +234,10 @@ angular.module('ionic.service.core', [])
               break;
 
             case 'unknown':
-            default:
               return false;
+            
+            default:
+              break;
           }
           cordova_script.setAttribute('src', cordova_src);
           document.head.appendChild(cordova_script);

@@ -230,23 +230,28 @@ angular.module('ionic.service.core', [])
           var cordova_src = 'cordova.js';
           switch(this.getDeviceTypeByNavigator()) {
             case 'android':
-              cordova_src = 'file:///android_asset/www/cordova.js'
+              if (window.location.href.substring(0, 4) === "file") {
+                cordova_src = 'file:///android_asset/www/cordova.js';
+              }
               break;
 
             case 'iphone':
               try {
                 var resource = window.localStorage.getItem('_ionic_cordova_js_resource');
+                console.log(resource);
                 var web_location = window.localStorage.getItem('_ionic_web_start');
                 var location = "file://" + window.location.pathname;
                 if (location === web_location) {
                   cordova_src = resource;
                 }
-              } catch(e) {}
+              } catch(e) {
+                console.log(e);
+              }
               break;
 
             case 'unknown':
               return false;
-            
+
             default:
               break;
           }

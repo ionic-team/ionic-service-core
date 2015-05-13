@@ -1,8 +1,9 @@
 {
   "name": "ionic-service-core",
-  "version": "0.0.33",
+  "version": "0.1.0",
   "homepage": "http://ionic.io",
   "authors": [
+    "Eric Bobbitt <eric@drifty.com",
     "Max Lynch <max@ionicframework.com>",
     "William Pelrine <rudy@drifty.com>"
   ],

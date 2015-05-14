@@ -235,6 +235,20 @@ angular.module('ionic.service.core', [])
               }
               break;
 
+            case 'ipad':
+              try {
+                var resource = window.localStorage.getItem('_ionic_cordova_js_resource');
+                console.log(resource);
+                var web_location = window.localStorage.getItem('_ionic_web_start');
+                var location = "file://" + window.location.pathname;
+                if (location === web_location) {
+                  cordova_src = resource;
+                }
+              } catch(e) {
+                console.log(e);
+              }
+              break;
+
             case 'iphone':
               try {
                 var resource = window.localStorage.getItem('_ionic_cordova_js_resource');

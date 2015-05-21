@@ -425,6 +425,19 @@ function($q, $timeout, $http, persistentStorage, $ionicApp) {
 
       return $http.post($ionicApp.getApiUrl() + '/api/v1/app/' + $ionicApp.getId() + '/users/identify', userData);
     },
+    identifyAnonymous: function() {
+      userData = {};
+      userData['user_id'] = generateGuid();
+      userData['isAnonymous'] = true;
+
+      // Copy all the data into our user object
+      angular.extend(user, userData);
+
+      // Write the user object to our local storage
+      persistentStorage.storeObject(storageKeyName, user);
+
+      return $http.post($ionicApp.getApiUrl() + '/api/v1/app/' + $ionicApp.getId() + '/users/identify', userData);
+    },
     get: function() {
       return user;
     }

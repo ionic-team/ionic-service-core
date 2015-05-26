@@ -132,7 +132,7 @@ angular.module('ionic.service.core', [])
  *   });
  * }]);
  */
-.provider('$ionicApp', function($httpProvider) {
+.provider('$ionicApp', ['$httpProvider', function($httpProvider) {
   var app = {};
 
   var settings = {
@@ -280,7 +280,7 @@ angular.module('ionic.service.core', [])
       }
     }
   }];
-})
+}])
 
 /**
 * @ngdoc service

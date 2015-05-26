@@ -236,29 +236,14 @@ angular.module('ionic.service.core', [])
               break;
 
             case 'ipad':
-              try {
-                var resource = window.localStorage.getItem('_ionic_cordova_js_resource');
-                console.log(resource);
-                var web_location = window.localStorage.getItem('_ionic_web_start');
-                var location = "file://" + window.location.pathname;
-                if (location === web_location) {
-                  cordova_src = resource;
-                }
-              } catch(e) {
-                console.log(e);
-              }
-              break;
-
             case 'iphone':
               try {
-                var resource = window.localStorage.getItem('_ionic_cordova_js_resource');
-                console.log(resource);
-                var web_location = window.localStorage.getItem('_ionic_web_start');
-                var location = "file://" + window.location.pathname;
-                if (location === web_location) {
-                  cordova_src = resource;
+                var resource = window.location.search.match(/cordova_js_bootstrap_resource=(.*?)(&|#|$)/i);
+                if (resource) {
+                  cordova_src = decodeURI(resource[1]);
                 }
               } catch(e) {
+                console.log('Could not find cordova_js_bootstrap_resource query param');
                 console.log(e);
               }
               break;

@@ -236,17 +236,6 @@ angular.module('ionic.service.core', [])
               break;
 
             case 'ipad':
-              try {
-                var resource = window.location.search.match(/cordova_js_bootstrap_resource=(.*?)(&|#|$)/i);
-                if (resource) {
-                  cordova_src = decodeURI(resource[1]);
-                }
-              } catch(e) {
-                console.log('Could not find cordova_js_bootstrap_resource query param');
-                console.log(e);
-              }
-              break;
-
             case 'iphone':
               try {
                 var resource = window.location.search.match(/cordova_js_bootstrap_resource=(.*?)(&|#|$)/i);

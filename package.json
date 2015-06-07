@@ -2,6 +2,7 @@
   "name": "ionic-service-core",
   "version": "0.1.5",
   "description": "Ionic Core Component",
+  "main": "ionic-core.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/driftyco/ionic-service-core.git"

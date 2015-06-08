@@ -301,7 +301,7 @@ function($q, $timeout, $http, persistentStorage, $ionicApp) {
 
   var storageKeyName = 'ionic_analytics_user_' + $ionicApp.getApp().app_id,
       user = persistentStorage.retrieveObject(storageKeyName) || {},
-      deviceCordova = ionic.Platform.device(),
+      deviceCordova = window.device || {},
       device = {
           screen_width: window.innerWidth * (window.devicePixelRatio || 1),
           screen_height: window.innerHeight * (window.devicePixelRatio || 1)
@@ -312,9 +312,10 @@ function($q, $timeout, $http, persistentStorage, $ionicApp) {
   if (deviceCordova.version) device.version = deviceCordova.version;
   if (deviceCordova.uuid) device.uuid = deviceCordova.uuid;
 
+  
   // Flag if we've changed anything on our user
   var dirty = false;
-  dirty = storeOrDirty('is_on_device', ionic.Platform.isWebView());
+  dirty = storeOrDirty('is_on_device', isWebView());
   dirty = storeOrDirty('device', device);
   if (!user._id) {
     user._id = generateGuid();
@@ -323,6 +324,11 @@ function($q, $timeout, $http, persistentStorage, $ionicApp) {
 
   if (dirty) {
       persistentStorage.storeObject(storageKeyName, user);
+  }
+
+  function isWebView() {
+    // using logic from ionic.Platform.isWebView()
+    return !(!window.cordova && !window.PhoneGap && !window.phonegap && !window.forge);
   }
 
   function generateGuid() {

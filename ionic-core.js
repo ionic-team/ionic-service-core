@@ -137,7 +137,8 @@ angular.module('ionic.service.core', [])
 
   var settings = {
     'api_server': 'https://apps.ionic.io',
-    'push_api_server': 'https://push.ionic.io'
+    'push_api_server': 'https://push.ionic.io',
+    'analytics_api_server': 'https://analytics.ionic.io'
   };
 
   var _is_cordova_available = function() {

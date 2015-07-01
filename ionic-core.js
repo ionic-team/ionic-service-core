@@ -225,25 +225,6 @@ angular.module('ionic.service.core', [])
         return (navigator.userAgent.match(/iPad/i))  == "iPad" ? "ipad" : (navigator.userAgent.match(/iPhone/i))  == "iPhone" ? "iphone" : (navigator.userAgent.match(/Android/i)) == "Android" ? "android" : (navigator.userAgent.match(/BlackBerry/i)) == "BlackBerry" ? "blackberry" : "unknown";
       },
 
-      loadIoXML: function(callback) {
-        var xobj = new XMLHttpRequest();
-
-        xobj.overrideMimeType("application/json");
-        xobj.open('GET', './lib/ionic-service-core/ionic-core-settings.json', true);
-        xobj.onreadystatechange = function () {
-          if (xobj.readyState == 4 && xobj.status == "200") {
-            callback(xobj.responseText);
-          }
-        };
-        xobj.send(null);
-      },
-
-      loadIoConfig: function() {
-        this.loadIoXML(function(resp) {
-          app = JSON.parse(resp);
-        });
-      },
-
       loadCordova: function() {
         if(!_is_cordova_available()) {
           var cordova_script = document.createElement('script');
@@ -282,7 +263,6 @@ angular.module('ionic.service.core', [])
 
       bootstrap: function() {
         this.loadCordova();
-        this.loadIoConfig();
       }
     }
   }];
@@ -449,6 +429,9 @@ function($q, $timeout, $http, persistentStorage, $ionicApp) {
     }
   }
 }])
+
+// Auto-generated configuration factory
+// Auto-generated configuration factory
 
 .run(['$ionicApp', function($ionicApp) {
   console.log('Ionic Core: init');

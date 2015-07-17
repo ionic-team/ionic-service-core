@@ -1,5 +1,3 @@
-angular.module('ionic.service.core', [])
-
 /**
  * @private
  * Provides a safe interface to store objects in persistent memory
@@ -292,11 +290,12 @@ angular.module('ionic.service.core', [])
 */
 .factory('$ionicUser', [
   '$q',
+  '$ionicCoreSettings'
   '$timeout',
   '$http',
   'persistentStorage',
   '$ionicApp',
-function($q, $timeout, $http, persistentStorage, $ionicApp) {
+function($q, $timeout, $http, $ionicCoreSettings, persistentStorage, $ionicApp) {
       // User object we'll use to store all our user info
 
 
@@ -354,6 +353,12 @@ function($q, $timeout, $http, persistentStorage, $ionicApp) {
 
     _op: function(key, value, type) {
       var u = user.user_id;
+      var appId = '';
+      if ($ionicCoreSettings.get('app_id')) {
+        appId = $ionicCoreSettings.get('app_id')
+      } else {
+        appId = $ionicApp.getId();
+      }
       if(!u) {
         throw new Error("Please call identify with a user_id before calling push");
       }
@@ -361,7 +366,7 @@ function($q, $timeout, $http, persistentStorage, $ionicApp) {
       o['user_id'] = u;
       o[key] = value;
 
-      return $http.post($ionicApp.getApiUrl() + '/api/v1/app/' + $ionicApp.getId() + '/users/' + type, o);
+      return $http.post($ionicApp.getApiUrl() + '/api/v1/app/' + appId + '/users/' + type, o);
     },
     /**
      * Push the given value into the array field identified by the key.
@@ -398,6 +403,12 @@ function($q, $timeout, $http, persistentStorage, $ionicApp) {
       return generateGuid();
     },
     identify: function(userData) {
+      var appId = '';
+      if ($ionicCoreSettings.get('app_id')) {
+        appId = $ionicCoreSettings.get('app_id')
+      } else {
+        appId = $ionicApp.getId();
+      }
       if (!userData.user_id) {
         var msg = 'You must supply a unique user_id field.';
         throw new Error(msg)
@@ -409,9 +420,15 @@ function($q, $timeout, $http, persistentStorage, $ionicApp) {
       // Write the user object to our local storage
       persistentStorage.storeObject(storageKeyName, user);
 
-      return $http.post($ionicApp.getApiUrl() + '/api/v1/app/' + $ionicApp.getId() + '/users/identify', userData);
+      return $http.post($ionicApp.getApiUrl() + '/api/v1/app/' + appId + '/users/identify', userData);
     },
     identifyAnonymous: function() {
+      var appId = '';
+      if ($ionicCoreSettings.get('app_id')) {
+        appId = $ionicCoreSettings.get('app_id')
+      } else {
+        appId = $ionicApp.getId();
+      }
       userData = {};
       userData['user_id'] = generateGuid();
       userData['isAnonymous'] = true;
@@ -422,7 +439,7 @@ function($q, $timeout, $http, persistentStorage, $ionicApp) {
       // Write the user object to our local storage
       persistentStorage.storeObject(storageKeyName, user);
 
-      return $http.post($ionicApp.getApiUrl() + '/api/v1/app/' + $ionicApp.getId() + '/users/identify', userData);
+      return $http.post($ionicApp.getApiUrl() + '/api/v1/app/' + appId + '/users/identify', userData);
     },
     get: function() {
       return user;
@@ -431,6 +448,17 @@ function($q, $timeout, $http, persistentStorage, $ionicApp) {
 }])
 
 // Auto-generated configuration factory
+.factory('$ionicCoreSettings', function() {
+  var settings = {};
+  return {
+    get: function(setting) {
+      if (settings[setting]) {
+        return settings[setting];
+      }
+      return null;
+    }
+  }
+})
 // Auto-generated configuration factory
 
 .run(['$ionicApp', function($ionicApp) {

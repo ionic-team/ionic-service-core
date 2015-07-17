@@ -1,3 +1,4 @@
+angular.module('ionic.service.core', [])
 /**
  * @private
  * Provides a safe interface to store objects in persistent memory
@@ -290,7 +291,7 @@
 */
 .factory('$ionicUser', [
   '$q',
-  '$ionicCoreSettings'
+  '$ionicCoreSettings',
   '$timeout',
   '$http',
   'persistentStorage',

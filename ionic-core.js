@@ -296,7 +296,7 @@ angular.module('ionic.service.core', [])
   '$http',
   'persistentStorage',
   '$ionicApp',
-function($q, $timeout, $http, $ionicCoreSettings, persistentStorage, $ionicApp) {
+function($q, $ionicCoreSettings, $timeout, $http, persistentStorage, $ionicApp) {
       // User object we'll use to store all our user info
 
 
@@ -450,7 +450,7 @@ function($q, $timeout, $http, $ionicCoreSettings, persistentStorage, $ionicApp) 
 
 // Auto-generated configuration factory
 .factory('$ionicCoreSettings', function() {
-  var settings = {};
+  var settings = {"dev_push":false,"app_id":"9977a467","api_key":"5c833588070030e42d0d22194b8b7c3dd9fbda0f6d054872"};
   return {
     get: function(setting) {
       if (settings[setting]) {

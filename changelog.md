@@ -1,6 +1,10 @@
 Changelog
 =========
 
+## 0.1.0
+
+* removed hardcoded references
+
 ## 0.1.9
 
 * Fixed a bug in the `$ionicUser` injections.

@@ -1,124 +1,10 @@
-angular.module('ionic.service.core', [])
 /**
- * @private
- * Provides a safe interface to store objects in persistent memory
+ * Ionic Core Module
+ * Copyright 2015 Ionic http://ionicframework.com/
+ * See LICENSE in this repository for license information
  */
-.provider('persistentStorage', function() {
-  return {
-    $get: ['$q', '$window', function($q, $window) {
-      var objectCache = {};
-      var memoryLocks = {};
 
-      var persistenceStrategy = {
-        get: function(key) {
-          return $window.localStorage.getItem(key);
-        },
-        remove: function(key) {
-          return $window.localStorage.removeItem(key);
-        },
-        set: function(key, value) {
-          return $window.localStorage.setItem(key, value);
-        }
-      };
-
-      return {
-        /**
-         * Stores an object in local storage under the given key
-        */
-        storeObject: function(key, object) {
-
-          // Convert object to JSON and store in localStorage
-          var json = JSON.stringify(object);
-          persistenceStrategy.set(key, json);
-
-          // Then store it in the object cache
-          objectCache[key] = object;
-        },
-
-        /**
-         * Either retrieves the cached copy of an object,
-         * or the object itself from localStorage.
-         * Returns null if the object couldn't be found.
-        */
-        retrieveObject: function(key) {
-
-          // First check to see if it's the object cache
-          var cached = objectCache[key];
-          if (cached) {
-            return cached;
-          }
-
-          // Deserialize the object from JSON
-          var json = persistenceStrategy.get(key);
-
-          // null or undefined --> return null.
-          if (json == null) {
-            return null;
-          }
-
-          try {
-            return JSON.parse(json);
-          } catch (err) {
-            return null;
-          }
-        },
-
-        /**
-         * Locks the async call represented by the given promise and lock key.
-         * Only one asyncFunction given by the lockKey can be running at any time.
-         *
-         * @param lockKey should be a string representing the name of this async call.
-         *        This is required for persistence.
-         * @param asyncFunction Returns a promise of the async call.
-         * @returns A new promise, identical to the one returned by asyncFunction,
-         *          but with two new errors: 'in_progress', and 'last_call_interrupted'.
-        */
-        lockedAsyncCall: function(lockKey, asyncFunction) {
-
-          var deferred = $q.defer();
-
-          // If the memory lock is set, error out.
-          if (memoryLocks[lockKey]) {
-            deferred.reject('in_progress');
-            return deferred.promise;
-          }
-
-          // If there is a stored lock but no memory lock, flag a persistence error
-          if (persistenceStrategy.get(lockKey) === 'locked') {
-            deferred.reject('last_call_interrupted');
-            deferred.promise.then(null, function() {
-              persistenceStrategy.remove(lockKey);
-            });
-            return deferred.promise;
-          }
-
-          // Set stored and memory locks
-          memoryLocks[lockKey] = true;
-          persistenceStrategy.set(lockKey, 'locked');
-
-          // Perform the async operation
-          asyncFunction().then(function(successData) {
-            deferred.resolve(successData);
-
-            // Remove stored and memory locks
-            delete memoryLocks[lockKey];
-            persistenceStrategy.remove(lockKey);
-          }, function(errorData) {
-            deferred.reject(errorData);
-
-            // Remove stored and memory locks
-            delete memoryLocks[lockKey];
-            persistenceStrategy.remove(lockKey);
-          }, function(notifyData) {
-            deferred.notify(notifyData);
-          });
-
-          return deferred.promise;
-        }
-      };
-    }]
-  };
-})
+angular.module('ionic.service.core', [])
 
 /**
  * A core Ionic account identity provider.
@@ -267,202 +153,242 @@ angular.module('ionic.service.core', [])
   }];
 }])
 
-/**
-* @ngdoc service
-* @name $ionicUser
-* @module ionic.service.core
-* @description
-*
-* An interface for storing data to a user object which will be sent with many ionic services
-*
-* Add tracking data to the user by passing objects in to the identify function.
-* The _id property identifies the user on this device and cannot be overwritten.
-*
-* @usage
-* ```javascript
-* $ionicUser.get();
-*
-* // Add info to user object
-* $ionicUser.identify({
-*   username: "Timmy"
-* });
-*
-* ```
-*/
-.factory('$ionicUser', [
-  '$q',
-  '$ionicCoreSettings',
-  '$timeout',
-  '$http',
-  'persistentStorage',
-  '$ionicApp',
-function($q, $ionicCoreSettings, $timeout, $http, persistentStorage, $ionicApp) {
-      // User object we'll use to store all our user info
-
-
-  var storageKeyName = 'ionic_analytics_user_' + $ionicApp.getApp().app_id,
-      user = persistentStorage.retrieveObject(storageKeyName) || {},
-      deviceCordova = ionic.Platform.device(),
-      device = {
-          screen_width: window.innerWidth * (window.devicePixelRatio || 1),
-          screen_height: window.innerHeight * (window.devicePixelRatio || 1)
-      };
-
-  if (deviceCordova.model) device.model = deviceCordova.model;
-  if (deviceCordova.platform) device.platform = deviceCordova.platform;
-  if (deviceCordova.version) device.version = deviceCordova.version;
-  if (deviceCordova.uuid) device.uuid = deviceCordova.uuid;
-
-  // Flag if we've changed anything on our user
-  var dirty = false;
-  dirty = storeOrDirty('is_on_device', ionic.Platform.isWebView());
-  dirty = storeOrDirty('device', device);
-  if (!user._id) {
-    user._id = generateGuid();
-    dirty = true;
-  }
-
-  if (dirty) {
-      persistentStorage.storeObject(storageKeyName, user);
-  }
-
-  function generateGuid() {
-    // Some crazy bit-twiddling to generate a random guid
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-      var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
-      return v.toString(16);
-    });
-  }
-
-  function storeOrDirty(key, value) {
-    // Store the key on the user object and return whether something changed
-    if (!angular.equals(user[key], value)) {
-      user[key] = value;
-      return true;
-    }
-    return false;
-  }
-
-  return {
-    /**
-     * Push a value to the array with the given key.
-     * @param key the key
-     * @param value the value
-     * @param isUnique whether to only push if it doesn't exist in the set
-     *
-     */
-
-    _op: function(key, value, type) {
-      var u = user.user_id;
-      var appId = '';
-      if ($ionicCoreSettings.get('app_id')) {
-        appId = $ionicCoreSettings.get('app_id')
-      } else {
-        appId = $ionicApp.getId();
-      }
-      if(!u) {
-        throw new Error("Please call identify with a user_id before calling push");
-      }
-      var o = {};
-      o['user_id'] = u;
-      o[key] = value;
-
-      return $http.post($ionicApp.getApiUrl() + '/api/v1/app/' + appId + '/users/' + type, o);
-    },
-    /**
-     * Push the given value into the array field identified by the key.
-     * Pass true to isUnique to only push the value if the value does not
-     * already exist in the array.
-     */
-    push: function(key, value, isUnique) {
-      if(isUnique) {
-        return this._op(key, value, 'pushUnique');
-      } else {
-        return this._op(key, value, 'push');
-      }
-    },
-    /**
-     * Pull a given value out of the array identified by key.
-     */
-    pull: function(key, value) {
-      return this._op(key, value, 'pull');
-    },
-    /**
-     * Set the given value under the key in the user. This overwrites
-     * any other data under that field. To append data to list, use push above.
-     */
-    set: function(key, value) {
-      return this._op(key, value, 'set');
-    },
-    /**
-     * Remove the field for the given key.
-     */
-    unset: function(key) {
-      return this._op(key, '', 'unset');
-    },
-    generateGUID: function() {
-      return generateGuid();
-    },
-    identify: function(userData) {
-      var appId = '';
-      if ($ionicCoreSettings.get('app_id')) {
-        appId = $ionicCoreSettings.get('app_id')
-      } else {
-        appId = $ionicApp.getId();
-      }
-      if (!userData.user_id) {
-        var msg = 'You must supply a unique user_id field.';
-        throw new Error(msg)
-      }
-
-      // Copy all the data into our user object
-      angular.extend(user, userData);
-
-      // Write the user object to our local storage
-      persistentStorage.storeObject(storageKeyName, user);
-
-      return $http.post($ionicApp.getApiUrl() + '/api/v1/app/' + appId + '/users/identify', userData);
-    },
-    identifyAnonymous: function() {
-      var appId = '';
-      if ($ionicCoreSettings.get('app_id')) {
-        appId = $ionicCoreSettings.get('app_id')
-      } else {
-        appId = $ionicApp.getId();
-      }
-      userData = {};
-      userData['user_id'] = generateGuid();
-      userData['isAnonymous'] = true;
-
-      // Copy all the data into our user object
-      angular.extend(user, userData);
-
-      // Write the user object to our local storage
-      persistentStorage.storeObject(storageKeyName, user);
-
-      return $http.post($ionicApp.getApiUrl() + '/api/v1/app/' + appId + '/users/identify', userData);
-    },
-    get: function() {
-      return user;
-    }
-  }
-}])
-
-// Auto-generated configuration factory
-.factory('$ionicCoreSettings', function() {
-  var settings = {};
-  return {
-    get: function(setting) {
-      if (settings[setting]) {
-        return settings[setting];
-      }
-      return null;
-    }
-  }
-})
-// Auto-generated configuration factory
-
 .run(['$ionicApp', function($ionicApp) {
   console.log('Ionic Core: init');
   $ionicApp.bootstrap();
 }]);
+
+(function() {
+  
+  angular.module('ionic.service.core')
+
+  /**
+   * @private
+   * Provides a safe interface to store objects in persistent memory
+   */
+  .provider('persistentStorage', function() {
+    return {
+      $get: ['$q', '$window', function($q, $window) {
+        var objectCache = {};
+        var memoryLocks = {};
+
+        var persistenceStrategy = {
+          get: function(key) {
+            return $window.localStorage.getItem(key);
+          },
+          remove: function(key) {
+            return $window.localStorage.removeItem(key);
+          },
+          set: function(key, value) {
+            return $window.localStorage.setItem(key, value);
+          }
+        };
+
+        return {
+          /**
+           * Stores an object in local storage under the given key
+          */
+          storeObject: function(key, object) {
+
+            // Convert object to JSON and store in localStorage
+            var json = JSON.stringify(object);
+            persistenceStrategy.set(key, json);
+
+            // Then store it in the object cache
+            objectCache[key] = object;
+          },
+
+          /**
+           * Either retrieves the cached copy of an object,
+           * or the object itself from localStorage.
+           * Returns null if the object couldn't be found.
+          */
+          retrieveObject: function(key) {
+
+            // First check to see if it's the object cache
+            var cached = objectCache[key];
+            if (cached) {
+              return cached;
+            }
+
+            // Deserialize the object from JSON
+            var json = persistenceStrategy.get(key);
+
+            // null or undefined --> return null.
+            if (json == null) {
+              return null;
+            }
+
+            try {
+              return JSON.parse(json);
+            } catch (err) {
+              return null;
+            }
+          },
+
+          /**
+           * Locks the async call represented by the given promise and lock key.
+           * Only one asyncFunction given by the lockKey can be running at any time.
+           *
+           * @param lockKey should be a string representing the name of this async call.
+           *        This is required for persistence.
+           * @param asyncFunction Returns a promise of the async call.
+           * @returns A new promise, identical to the one returned by asyncFunction,
+           *          but with two new errors: 'in_progress', and 'last_call_interrupted'.
+          */
+          lockedAsyncCall: function(lockKey, asyncFunction) {
+
+            var deferred = $q.defer();
+
+            // If the memory lock is set, error out.
+            if (memoryLocks[lockKey]) {
+              deferred.reject('in_progress');
+              return deferred.promise;
+            }
+
+            // If there is a stored lock but no memory lock, flag a persistence error
+            if (persistenceStrategy.get(lockKey) === 'locked') {
+              deferred.reject('last_call_interrupted');
+              deferred.promise.then(null, function() {
+                persistenceStrategy.remove(lockKey);
+              });
+              return deferred.promise;
+            }
+
+            // Set stored and memory locks
+            memoryLocks[lockKey] = true;
+            persistenceStrategy.set(lockKey, 'locked');
+
+            // Perform the async operation
+            asyncFunction().then(function(successData) {
+              deferred.resolve(successData);
+
+              // Remove stored and memory locks
+              delete memoryLocks[lockKey];
+              persistenceStrategy.remove(lockKey);
+            }, function(errorData) {
+              deferred.reject(errorData);
+
+              // Remove stored and memory locks
+              delete memoryLocks[lockKey];
+              persistenceStrategy.remove(lockKey);
+            }, function(notifyData) {
+              deferred.notify(notifyData);
+            });
+
+            return deferred.promise;
+          }
+        };
+      }]
+    };
+  })
+})();
+
+(function() {
+
+  angular.module('ionic.service.core')
+
+  // Auto-generated configuration factory
+  .factory('$ionicCoreSettings', function() {
+    var settings = {};
+    return {
+      get: function(setting) {
+        if (settings[setting]) {
+          return settings[setting];
+        }
+        return null;
+      }
+    }
+  })
+  // Auto-generated configuration factory
+
+})();
+
+(function() {
+
+  var IonicUserFactory = function($q, $ionicCoreSettings, $timeout, $http, persistentStorage, $ionicApp) {
+    var user_api_base = $ionicApp.getApiUrl() + '/api/v1/app/' + $ionicCoreSettings.get('app_id') + '/users';
+    var user_api_endpoints = {
+      'save': function(userModel) {
+        return user_api_base + '/identify';
+      }
+    };
+
+    var IonicUserModel = (function() {
+      var UserModel = function(){};
+      var user = UserModel.prototype;
+      var _block_save = false;
+      var _user_data = {
+        'user_id': null,
+        '_push': {
+          'android': [],
+          'ios': []
+        }
+      };
+
+      user.load = function(id) {
+        console.log('load', id);
+      };
+
+      Object.defineProperty(user, "user_id", {
+        set: function(v) {
+          if(v && (typeof v === 'string') && v != '') {
+            _user_data.user_id = v;
+            return true;
+          } else {
+            return false;
+          }
+        },
+
+        get: function() {
+          return _user_data.user_id || null;
+        }
+      });
+
+      user.compileUserData = function() {
+        return _user_data;
+      };
+
+      user.save = function() {
+        var self = this;
+        if(!_block_save) {
+          _block_save = true;
+          $http.post(user_api_endpoints.save(this), self.compileUserData()).then(function(result) {
+            _block_save = false;
+            console.log('just saved user', result);
+          }, function(err) {
+            _block_save = false;
+            console.log('user error', err);
+          });
+        } else {
+          console.log("Ionic User: A save operation is already in progress for " + this + ".")
+        }
+      };
+
+      user.toString = function() {
+        return '<IonicUser [\'' + this.user_id + '\']>'; 
+      }
+
+      return UserModel;
+    })();
+    
+    return {
+      'factory': function() {
+        return new IonicUserModel();
+      }
+    };
+  };
+
+  angular.module('ionic.service.core')
+
+  .factory('$ionicUser', [
+    '$q',
+    '$ionicCoreSettings',
+    '$timeout',
+    '$http',
+    'persistentStorage',
+    '$ionicApp',
+    IonicUserFactory
+  ]);
+
+})();

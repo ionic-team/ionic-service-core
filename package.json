@@ -19,5 +19,13 @@
   "bugs": {
     "url": "https://github.com/driftyco/ionic-service-core/issues"
   },
-  "homepage": "https://github.com/driftyco/ionic-service-core#readme"
+  "homepage": "https://github.com/driftyco/ionic-service-core#readme",
+  "devDependencies": {
+    "gulp": "^3.7.0",
+    "gulp-concat": "^2.2.0",
+    "gulp-footer": "^1.0.4",
+    "gulp-header": "^1.0.2",
+    "gulp-util": "^2.2.16",
+    "gulp-watch": "^0.6.5"
+  }
 }

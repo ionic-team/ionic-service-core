@@ -125,7 +125,7 @@ angular.module('ionic.service.core', [])
  *
  * Usage:
  * angular.module('myApp', ['ionic', 'ionic.service.core'])
- * .config(['$ionicAppProvider', function($ionicAccountProvider) {
+ * .config(['$ionicAppProvider', function($ionicAppProvider) {
  *   $ionicAppProvider.identify({
  *     app_id: 'x34dfxjydi23dx'
  *   });

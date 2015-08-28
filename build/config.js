@@ -11,7 +11,15 @@ module.exports = {
 
   dist: '.',
 
-  jsFiles: ['src/core.js', 'src/storage.js', 'src/settings.js', 'src/user.js'],
+  jsFiles: [
+    'src/core.js',
+    'src/events.js',
+    'src/storage.js',
+    'src/settings.js',
+    'src/user.js',
+    'src/app.js',
+    'src/angular-integration.js'
+  ],
 
   versionData: {
     version: pkg.version

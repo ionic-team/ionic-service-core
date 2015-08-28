@@ -1,6 +1,12 @@
 Changelog
 =========
 
+## 0.2.0
+
+* New ES6 based build system
+* Replaced $ionicUser with a new interface that behaves like an expected model
+* Removed hard dependency on AngularJS
+
 ## 0.1.0
 
 * removed hardcoded references

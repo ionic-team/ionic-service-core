@@ -1,6 +1,27 @@
 (function() {
 
-  angular.module('ionic.service.core')
+  var Settings = class {
+
+    constructor() {
+      this._settings = null;
+      return this;
+    };
+
+    factory(name, func) {
+      this._settings = func();
+      return this;
+    };
+
+    get(name) {
+      return this._settings.get(name);
+    }
+
+    finish() {
+      return this;
+    };
+  };
+
+  var temp = new Settings()
 
   // Auto-generated configuration factory
   .factory('$ionicCoreSettings', function() {
@@ -15,5 +36,36 @@
     }
   })
   // Auto-generated configuration factory
+
+  .finish();
+
+  var CoreSettings = class {
+
+    constructor() {
+      this._locations = {
+        'api': 'https://apps.ionic.io',
+        'push': 'https://push.ionic.io',
+        'analytics': 'https://analytics.ionic.io'
+      };
+      this._dev_locations = this.get('dev_locations');
+      if(!this._dev_locations) { this._dev_locations = {}; }
+    }
+
+    get(name) {
+      return temp.get(name);
+    }
+
+    getURL(name) {
+      if(this._dev_locations[name]) {
+        return this._dev_locations[name];
+      } else if(this._locations[name]) {
+        return this._locations[name];
+      } else {
+        return null;
+      }
+    } 
+  };
+
+  ionic.io.core.Settings = CoreSettings;
 
 })();

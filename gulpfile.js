@@ -4,13 +4,19 @@ var gulp = require('gulp'),
   concat = require('gulp-concat'),
   footer = require('gulp-footer'),
   header = require('gulp-header'),
-  watch = require('gulp-watch');
+  watch = require('gulp-watch'),
+  browserify = require("browserify"),
+  babelify = require("babelify"),
+  fs = require("fs")
 
 gulp.task('build', function () {
-  return gulp.src(buildConfig.jsFiles)
-    .pipe(concat('ionic-core.js'))
-    .pipe(header(buildConfig.banner))
-    .pipe(gulp.dest(buildConfig.dist));
+  browserify({
+    entries: buildConfig.jsFiles,
+    debug: false,
+    transform: [babelify]
+  }).bundle()
+  .on("error", function (err) { console.log("Error : " + err.message); })
+  .pipe(fs.createWriteStream("ionic-core.js"));
 });
 
 gulp.task('watch', ['build'], function() {

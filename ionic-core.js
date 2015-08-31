@@ -1987,7 +1987,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
         if (err) {
           reject(err);
         } else {
-          if (response.statusCode < 200 || response.statusCode >= 300) {
+          if (response.statusCode < 200 || response.statusCode >= 400) {
             var err = new Error("Request Failed with status code of " + response.statusCode);
             reject(err);
           } else {
@@ -2001,22 +2001,54 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
   ;
 
-  var DeferredPromise = function DeferredPromise() {
-    _classCallCheck(this, DeferredPromise);
+  var DeferredPromise = (function () {
+    function DeferredPromise() {
+      _classCallCheck(this, DeferredPromise);
 
-    var self = this;
-    this.promise = new IonicPromise(function (resolve, reject) {
-      self.resolve = resolve;
-      self.reject = reject;
-    });
-  };
+      var self = this;
+      this._update = false;
+      this.promise = new IonicPromise(function (resolve, reject) {
+        self.resolve = resolve;
+        self.reject = reject;
+      });
+      var original_then = this.promise.then;
+      this.promise.then = function (ok, fail, update) {
+        self._update = update;
+        return original_then.call(self.promise, ok, fail);
+      };
+    }
+
+    _createClass(DeferredPromise, [{
+      key: "notify",
+      value: function notify(value) {
+        if (this._update && typeof this._update === 'function') {
+          this._update(value);
+        }
+      }
+    }]);
+
+    return DeferredPromise;
+  })();
 
   var IonicIOCore = (function () {
     function IonicIOCore() {
       _classCallCheck(this, IonicIOCore);
 
+      var self = this;
       console.log('Ionic Core: init');
       this.modules = {};
+      this._pluginsReady = false;
+      this._emitter = this.events;
+
+      try {
+        document.addEventListener("deviceready", function () {
+          console.log('Ionic Core: plugins are ready');
+          self._pluginsReady = true;
+          self._emitter.emit('ionic_core:plugins_ready');
+        }, false);
+      } catch (e) {
+        console.log('Ionic Core: unable to listen for cordova plugins to be ready');
+      }
     }
 
     _createClass(IonicIOCore, [{
@@ -2101,14 +2133,56 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
         return navigator.userAgent.match(/iPad/i) == "iPad" ? "ipad" : navigator.userAgent.match(/iPhone/i) == "iPhone" ? "iphone" : navigator.userAgent.match(/Android/i) == "Android" ? "android" : navigator.userAgent.match(/BlackBerry/i) == "BlackBerry" ? "blackberry" : "unknown";
       }
     }, {
+      key: "isAndroidDevice",
+      value: function isAndroidDevice() {
+        var device = this.getDeviceTypeByNavigator();
+        if (device === 'android') {
+          return true;
+        }
+        return false;
+      }
+    }, {
+      key: "isIOSDevice",
+      value: function isIOSDevice() {
+        var device = this.getDeviceTypeByNavigator();
+        if (device === 'iphone' || device === 'ipad') {
+          return true;
+        }
+        return false;
+      }
+    }, {
       key: "bootstrap",
       value: function bootstrap() {
         this.loadCordova();
       }
     }, {
+      key: "onReady",
+
+      /**
+       * Fire a callback when core + plugins are ready. This will fire immediately if
+       * the components have already become available.
+       *
+       * @param {Function} Callback function to fire off
+       */
+      value: function onReady(callback) {
+        var self = this;
+        if (this._pluginsReady) {
+          callback(self);
+        } else {
+          self._emitter.on('ionic_core:plugins_ready', function (event, data) {
+            callback(self);
+          });
+        }
+      }
+    }, {
       key: "push",
       get: function get() {
         return this._basicModuleInit('push', ionic.io.push.PushService);
+      }
+    }, {
+      key: "deploy",
+      get: function get() {
+        return this._basicModuleInit('deploy', ionic.io.deploy.DeployService);
       }
     }, {
       key: "settings",
@@ -2121,7 +2195,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
         return this._basicModuleInit('storage', ionic.io.core.Storage);
       }
     }, {
-      key: "user",
+      key: "users",
       get: function get() {
         return this._basicModuleInit('user', ionic.io.core.UserInterface);
       }
@@ -2530,9 +2604,9 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
           token = token.token;
         }
 
-        if (ionic.Platform.isAndroid()) {
+        if (ionic.io.core.main.isAndroidDevice()) {
           platform = 'android';
-        } else if (ionic.Platform.isIOS()) {
+        } else if (ionic.io.core.main.isIOSDevice()) {
           platform = 'ios';
         }
 

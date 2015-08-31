@@ -51,9 +51,9 @@
         token = token.token;
       }
 
-      if(ionic.Platform.isAndroid()) {
+      if(ionic.io.core.main.isAndroidDevice()) {
         platform = 'android';
-      } else if(ionic.Platform.isIOS()) {
+      } else if(ionic.io.core.main.isIOSDevice()) {
         platform = 'ios';
       }
 

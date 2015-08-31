@@ -10,7 +10,7 @@
           if(err) {
             reject(err);
           } else {
-            if (response.statusCode < 200 || response.statusCode >= 300) {
+            if (response.statusCode < 200 || response.statusCode >= 400) {
               var err = new Error("Request Failed with status code of " + response.statusCode);
               reject(err);
             } else {
@@ -26,18 +26,43 @@
   class DeferredPromise {
     constructor() {
       var self = this;
+      this._update = false;
       this.promise = new IonicPromise(function(resolve, reject) {
         self.resolve = resolve;
         self.reject = reject;
       });
+      var original_then = this.promise.then;
+      this.promise.then = function(ok, fail, update) {
+        self._update = update;
+        return original_then.call(self.promise, ok, fail);
+      };
+    };
+
+    notify(value) {
+      if(this._update && (typeof this._update === 'function')) {
+        this._update(value);
+      }
     }
   }
 
   class IonicIOCore {
     constructor() {
+      var self = this;
       console.log('Ionic Core: init');
       this.modules = {};
-    }
+      this._pluginsReady = false;
+      this._emitter = this.events;
+
+      try {
+        document.addEventListener("deviceready", function() {
+          console.log('Ionic Core: plugins are ready');
+          self._pluginsReady = true;
+          self._emitter.emit('ionic_core:plugins_ready');
+        }, false);
+      } catch(e) {
+        console.log('Ionic Core: unable to listen for cordova plugins to be ready');
+      }
+    };
 
     _basicModuleInit(name, module) {
       if(typeof this.modules[name] === 'undefined') {
@@ -50,6 +75,10 @@
       return this._basicModuleInit('push', ionic.io.push.PushService);
     }
 
+    get deploy() {
+      return this._basicModuleInit('deploy', ionic.io.deploy.DeployService);
+    }
+
     get settings() {
       return this._basicModuleInit('settings', ionic.io.core.Settings);
     }
@@ -58,7 +87,7 @@
       return this._basicModuleInit('storage', ionic.io.core.Storage);
     }
 
-    get user() {
+    get users() {
       return this._basicModuleInit('user', ionic.io.core.UserInterface);
     }
 
@@ -136,8 +165,41 @@
       return (navigator.userAgent.match(/iPad/i))  == "iPad" ? "ipad" : (navigator.userAgent.match(/iPhone/i))  == "iPhone" ? "iphone" : (navigator.userAgent.match(/Android/i)) == "Android" ? "android" : (navigator.userAgent.match(/BlackBerry/i)) == "BlackBerry" ? "blackberry" : "unknown";
     };
 
+    isAndroidDevice() {
+      var device = this.getDeviceTypeByNavigator();
+      if(device === 'android') {
+        return true;
+      }
+      return false;
+    };
+
+    isIOSDevice() {
+      var device = this.getDeviceTypeByNavigator();
+      if(device === 'iphone' || device === 'ipad') {
+        return true;
+      }
+      return false;
+    }
+
     bootstrap() {
       this.loadCordova();
+    };
+
+    /**
+     * Fire a callback when core + plugins are ready. This will fire immediately if
+     * the components have already become available.
+     *
+     * @param {Function} Callback function to fire off
+     */
+    onReady(callback) {
+      var self = this;
+      if(this._pluginsReady) {
+        callback(self);
+      } else {
+        self._emitter.on('ionic_core:plugins_ready', function(event, data) {
+          callback(self);
+        });
+      }
     };
   }
 

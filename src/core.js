@@ -1,5 +1,8 @@
+if(typeof ionic === 'undefined') { window.ionic = {}; }
+
 (function() {
 
+  var ionic = window.ionic;
   var IonicPromise = require("es6-promise").Promise;
   var request = require("browser-request");
 
@@ -203,8 +206,7 @@
     };
   }
 
-  if((typeof ionic == 'undefined')) { ionic = {}; }
-  if((typeof ionic.io == 'undefined')) { ionic.io = {}; }
+  if(typeof ionic.io === 'undefined') { ionic.io = {}; }
 
   ionic.io.register = function(namespace, context) {
     context = context || ionic.io;

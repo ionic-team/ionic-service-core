@@ -1974,8 +1974,13 @@ var _createClass = (function () { function defineProperties(target, props) { for
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
+if (typeof ionic === 'undefined') {
+  window.ionic = {};
+}
+
 (function () {
 
+  var ionic = window.ionic;
   var IonicPromise = require("es6-promise").Promise;
   var request = require("browser-request");
 
@@ -2209,10 +2214,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
     return IonicIOCore;
   })();
 
-  if (typeof ionic == 'undefined') {
-    ionic = {};
-  }
-  if (typeof ionic.io == 'undefined') {
+  if (typeof ionic.io === 'undefined') {
     ionic.io = {};
   }
 

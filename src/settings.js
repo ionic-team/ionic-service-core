@@ -5,12 +5,12 @@
     constructor() {
       this._settings = null;
       return this;
-    };
+    }
 
     factory(name, func) {
       this._settings = func();
       return this;
-    };
+    }
 
     get(name) {
       return this._settings.get(name);
@@ -18,7 +18,7 @@
 
     finish() {
       return this;
-    };
+    }
   };
 
   var temp = new Settings()
@@ -27,13 +27,13 @@
   .factory('$ionicCoreSettings', function() {
     var settings = {};
     return {
-      get: function(setting) {
+      "get": function(setting) {
         if (settings[setting]) {
           return settings[setting];
         }
         return null;
       }
-    }
+    };
   })
   // Auto-generated configuration factory
 
@@ -47,8 +47,8 @@
         'push': 'https://push.ionic.io',
         'analytics': 'https://analytics.ionic.io'
       };
-      this._dev_locations = this.get('dev_locations');
-      if(!this._dev_locations) { this._dev_locations = {}; }
+      this._devLocations = this.get('dev_locations');
+      if (!this._devLocations) { this._devLocations = {}; }
     }
 
     get(name) {
@@ -56,14 +56,14 @@
     }
 
     getURL(name) {
-      if(this._dev_locations[name]) {
+      if (this._dev_locations[name]) {
         return this._dev_locations[name];
-      } else if(this._locations[name]) {
+      } else if (this._locations[name]) {
         return this._locations[name];
       } else {
         return null;
       }
-    } 
+    }
   };
 
   ionic.io.core.Settings = CoreSettings;

@@ -1875,7 +1875,7 @@ if (typeof angular === 'object' && angular.module) {
     return {
       '$get': [function () {
         var io = ionic.io.init();
-        return ionic.io.storage;
+        return io.storage;
       }]
     };
   }).factory('$ionicCoreSettings', [function () {
@@ -1908,22 +1908,22 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 (function () {
   var App = (function () {
-    function App(app_id, api_key) {
+    function App(appId, apiKey) {
       _classCallCheck(this, App);
 
-      if (!app_id || app_id === '') {
+      if (!appId || appId === '') {
         console.log('Ionic Core: No app_id was provided to IonicApp');
         return false;
       }
 
-      if (!api_key || api_key === '') {
+      if (!apiKey || apiKey === '') {
         console.log('Ionic Core: No api_key was provided to IonicApp');
         return false;
       }
 
       var privateData = {
-        'id': app_id,
-        'apiKey': api_key
+        'id': appId,
+        'apiKey': apiKey
       };
 
       this.privateVar = function (name) {
@@ -1933,13 +1933,6 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
       // other config value reference
       this.devPush = null;
       this.gcmKey = null;
-
-      if (typeof config === 'object') {
-        var x = null;
-        for (x in config) {
-          this[x] = config[x];
-        }
-      }
     }
 
     _createClass(App, [{
@@ -1961,8 +1954,6 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
     return App;
   })();
-
-  ;
 
   ionic.io.core.App = App;
 })();
@@ -1993,8 +1984,8 @@ if (typeof ionic === 'undefined') {
           reject(err);
         } else {
           if (response.statusCode < 200 || response.statusCode >= 400) {
-            var err = new Error("Request Failed with status code of " + response.statusCode);
-            reject(err);
+            var _err = new Error("Request Failed with status code of " + response.statusCode);
+            reject(_err);
           } else {
             resolve({ 'response': response, 'payload': result });
           }
@@ -2003,8 +1994,6 @@ if (typeof ionic === 'undefined') {
     });
     return p;
   };
-
-  ;
 
   var DeferredPromise = (function () {
     function DeferredPromise() {
@@ -2016,10 +2005,10 @@ if (typeof ionic === 'undefined') {
         self.resolve = resolve;
         self.reject = reject;
       });
-      var original_then = this.promise.then;
+      var originalThen = this.promise.then;
       this.promise.then = function (ok, fail, update) {
         self._update = update;
-        return original_then.call(self.promise, ok, fail);
+        return originalThen.call(self.promise, ok, fail);
       };
     }
 
@@ -2060,21 +2049,19 @@ if (typeof ionic === 'undefined') {
       key: "_basicModuleInit",
       value: function _basicModuleInit(name, module) {
         if (typeof this.modules[name] === 'undefined') {
-          this.modules[name] = new module();
+          this.modules[name] = new module(); // eslint-disable-line new-cap
         }
         return this.modules[name];
       }
     }, {
-      key: "_is_cordova_available",
-      value: function _is_cordova_available() {
+      key: "_isCordovaAvailable",
+      value: function _isCordovaAvailable() {
         console.log('Ionic Core: searching for cordova.js');
 
-        try {
-          if (window.cordova || cordova) {
-            console.log('Ionic Core: cordova.js has already been loaded');
-            return true;
-          }
-        } catch (e) {}
+        if (typeof cordova !== 'undefined') {
+          console.log('Ionic Core: cordova.js has already been loaded');
+          return true;
+        }
 
         var scripts = document.getElementsByTagName('script');
         var len = scripts.length;
@@ -2089,7 +2076,9 @@ if (typeof ionic === 'undefined') {
                 console.log('Ionic Core: cordova.js has previously been included.');
                 return true;
               }
-            } catch (e) {}
+            } catch (e) {
+              console.log('Ionic Core: encountered error while testing for cordova.js presence, ' + e.toString());
+            }
           }
         }
 
@@ -2098,13 +2087,13 @@ if (typeof ionic === 'undefined') {
     }, {
       key: "loadCordova",
       value: function loadCordova() {
-        if (!this._is_cordova_available()) {
-          var cordova_script = document.createElement('script');
-          var cordova_src = 'cordova.js';
+        if (!this._isCordovaAvailable()) {
+          var cordovaScript = document.createElement('script');
+          var cordovaSrc = 'cordova.js';
           switch (this.getDeviceTypeByNavigator()) {
             case 'android':
               if (window.location.href.substring(0, 4) === "file") {
-                cordova_src = 'file:///android_asset/www/cordova.js';
+                cordovaSrc = 'file:///android_asset/www/cordova.js';
               }
               break;
 
@@ -2113,7 +2102,7 @@ if (typeof ionic === 'undefined') {
               try {
                 var resource = window.location.search.match(/cordova_js_bootstrap_resource=(.*?)(&|#|$)/i);
                 if (resource) {
-                  cordova_src = decodeURI(resource[1]);
+                  cordovaSrc = decodeURI(resource[1]);
                 }
               } catch (e) {
                 console.log('Could not find cordova_js_bootstrap_resource query param');
@@ -2127,16 +2116,43 @@ if (typeof ionic === 'undefined') {
             default:
               break;
           }
-          cordova_script.setAttribute('src', cordova_src);
-          document.head.appendChild(cordova_script);
+          cordovaScript.setAttribute('src', cordovaSrc);
+          document.head.appendChild(cordovaScript);
           console.log('Ionic Core: injecting cordova.js');
         }
       }
+
+      /**
+       * Determine the device type via the user agent string
+       * @return {string} name of device platform or "unknown" if unable to identify the device
+       */
     }, {
       key: "getDeviceTypeByNavigator",
       value: function getDeviceTypeByNavigator() {
-        return navigator.userAgent.match(/iPad/i) == "iPad" ? "ipad" : navigator.userAgent.match(/iPhone/i) == "iPhone" ? "iphone" : navigator.userAgent.match(/Android/i) == "Android" ? "android" : navigator.userAgent.match(/BlackBerry/i) == "BlackBerry" ? "blackberry" : "unknown";
+        var agent = navigator.userAgent;
+
+        var ipad = agent.match(/iPad/i);
+        if (ipad && ipad[0].toLowerCase() === 'ipad') {
+          return 'ipad';
+        }
+
+        var iphone = agent.match(/iPhone/i);
+        if (iphone && iphone[0].toLowerCase() === 'iphone') {
+          return 'iphone';
+        }
+
+        var android = agent.match(/Android/i);
+        if (android && android[0].toLowerCase() === 'android') {
+          return 'android';
+        }
+
+        return "unknown";
       }
+
+      /**
+       * Check if the device is an Android device
+       * @return {boolean} True if Android, false otherwise
+       */
     }, {
       key: "isAndroidDevice",
       value: function isAndroidDevice() {
@@ -2146,6 +2162,11 @@ if (typeof ionic === 'undefined') {
         }
         return false;
       }
+
+      /**
+       * Check if the device is an iOS device
+       * @return {boolean} True if iOS, false otherwise
+       */
     }, {
       key: "isIOSDevice",
       value: function isIOSDevice() {
@@ -2155,26 +2176,34 @@ if (typeof ionic === 'undefined') {
         }
         return false;
       }
+
+      /**
+       * Bootstrap Ionic Core
+       *
+       * Handles the cordova.js bootstrap
+       * @return {void}
+       */
     }, {
       key: "bootstrap",
       value: function bootstrap() {
         this.loadCordova();
       }
-    }, {
-      key: "onReady",
 
       /**
        * Fire a callback when core + plugins are ready. This will fire immediately if
        * the components have already become available.
        *
-       * @param {Function} Callback function to fire off
+       * @param {function} callback function to fire off
+       * @return {void}
        */
+    }, {
+      key: "onReady",
       value: function onReady(callback) {
         var self = this;
         if (this._pluginsReady) {
           callback(self);
         } else {
-          self._emitter.on('ionic_core:plugins_ready', function (event, data) {
+          self._emitter.on('ionic_core:plugins_ready', function () {
             callback(self);
           });
         }
@@ -2227,11 +2256,9 @@ if (typeof ionic === 'undefined') {
         context = context[namespace];
       }
       namespace = namespaces[i];
-      try {
-        if ('undefined' === typeof context[namespace]) {
-          context[namespace] = {};
-        }
-      } catch (e) {}
+      if ('undefined' === typeof context[namespace]) {
+        context[namespace] = {};
+      }
     }
     return context;
   };
@@ -2285,8 +2312,6 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
     return EventEmitter;
   })();
 
-  ;
-
   ionic.io.util.Events = EventEmitter;
 })();
 
@@ -2334,7 +2359,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
   .factory('$ionicCoreSettings', function () {
     var settings = {};
     return {
-      get: function get(setting) {
+      "get": function get(setting) {
         if (settings[setting]) {
           return settings[setting];
         }
@@ -2355,9 +2380,9 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
         'push': 'https://push.ionic.io',
         'analytics': 'https://analytics.ionic.io'
       };
-      this._dev_locations = this.get('dev_locations');
-      if (!this._dev_locations) {
-        this._dev_locations = {};
+      this._devLocations = this.get('dev_locations');
+      if (!this._devLocations) {
+        this._devLocations = {};
       }
     }
 
@@ -2418,8 +2443,6 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
     return IonicLocalStorageStrategy;
   })();
 
-  ;
-
   var objectCache = {};
   var memoryLocks = {};
   var DeferredPromise = ionic.io.core.DeferredPromise;
@@ -2433,6 +2456,9 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
     /**
      * Stores an object in local storage under the given key
+     * @param {string} key Name of the key to store values in
+     * @param {object} object The object to store with the key
+     * @return {void}
      */
 
     _createClass(IonicLocalStorage, [{
@@ -2445,14 +2471,15 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
         // Then store it in the object cache
         objectCache[key] = object;
       }
-    }, {
-      key: 'retrieveObject',
 
       /**
        * Either retrieves the cached copy of an object,
        * or the object itself from localStorage.
-       * Returns null if the object couldn't be found.
+       * @param {string} key The name of the key to pull from
+       * @return {mixed} Returns the previously stored Object or null
        */
+    }, {
+      key: 'retrieveObject',
       value: function retrieveObject(key) {
         // First check to see if it's the object cache
         var cached = objectCache[key];
@@ -2474,19 +2501,19 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
           return null;
         }
       }
-    }, {
-      key: 'lockedAsyncCall',
 
       /**
        * Locks the async call represented by the given promise and lock key.
        * Only one asyncFunction given by the lockKey can be running at any time.
        *
-       * @param lockKey should be a string representing the name of this async call.
+       * @param {string} lockKey should be a string representing the name of this async call.
        *        This is required for persistence.
-       * @param asyncFunction Returns a promise of the async call.
-       * @returns A new promise, identical to the one returned by asyncFunction,
+       * @param {function} asyncFunction Returns a promise of the async call.
+       * @returns {Promise} A new promise, identical to the one returned by asyncFunction,
        *          but with two new errors: 'in_progress', and 'last_call_interrupted'.
        */
+    }, {
+      key: 'lockedAsyncCall',
       value: function lockedAsyncCall(lockKey, asyncFunction) {
 
         var self = this;
@@ -2535,8 +2562,6 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
     return IonicLocalStorage;
   })();
 
-  ;
-
   ionic.io.core.Storage = IonicLocalStorage;
 })();
 
@@ -2553,16 +2578,16 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
   var DeferredPromise = ionic.io.util.DeferredPromise;
   var Settings = new ionic.io.core.Settings();
 
-  var user_api_base = Settings.getURL('api') + '/api/v1/app/' + Settings.get('app_id') + '/users';
-  var user_api_endpoints = {
+  var userAPIBase = Settings.getURL('api') + '/api/v1/app/' + Settings.get('app_id') + '/users';
+  var userAPIEndpoints = {
     'load': function load(userModel) {
-      return user_api_base + '/' + userModel.id;
+      return userAPIBase + '/' + userModel.id;
     },
-    'save': function save(userModel) {
-      return user_api_base + '/identify';
+    'save': function save() {
+      return userAPIBase + '/identify';
     },
-    'addToken': function addToken(userModel) {
-      return user_api_base + '/pushUnique';
+    'addToken': function addToken() {
+      return userAPIBase + '/pushUnique';
     }
   };
 
@@ -2572,6 +2597,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
      * Push Data Object
      *
      * Holds push data to use in conjunction with Ionic User models.
+     * @constructor
      */
 
     function PushData() {
@@ -2583,18 +2609,17 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
       };
     }
 
+    /**
+     * Add a new token to the current list of tokens
+     * Duplicates are not added, but still return as succesfully added.
+     *
+     * @param {ionic.io.push.Token} token Push Token
+     * @return {boolean} False on error, otherwise true
+     */
+
     _createClass(PushData, [{
       key: 'addToken',
-
-      /**
-       * Add a new token to the current list of tokens
-       * Duplicates are not added, but still return as succesfully added.
-       * 
-       * @param {ionic.io.push.Token} Push Token
-       * @return {Boolean} False on error, otherwise true
-       */
       value: function addToken(token) {
-        var self = this;
         var platform = null;
 
         if (typeof token === 'undefined' || !token || token === '') {
@@ -2617,17 +2642,17 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
           return false;
         }
 
-        var platform_tokens = this.tokens[platform];
+        var platformTokens = this.tokens[platform];
         var hasToken = false;
         var testToken = null;
 
-        for (testToken in platform_tokens) {
-          if (platform_tokens[testToken] === token) {
+        for (testToken in platformTokens) {
+          if (platformTokens[testToken] === token) {
             hasToken = true;
           }
         }
         if (!hasToken) {
-          platform_tokens.push(token);
+          platformTokens.push(token);
         }
 
         return true;
@@ -2636,8 +2661,6 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
     return PushData;
   })();
-
-  ;
 
   var CustomData = (function () {
     function CustomData(data) {
@@ -2674,14 +2697,12 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
     return CustomData;
   })();
 
-  ;
-
   var User = (function () {
     function User() {
       _classCallCheck(this, User);
 
-      this.block_load = false;
-      this.block_save = false;
+      this._blockLoad = false;
+      this._blockSave = false;
       this.push = new PushData();
       this.data = new CustomData();
     }
@@ -2695,10 +2716,10 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
         var tempUser = new ionic.io.core.User();
         tempUser.id = id;
 
-        if (!self._block_load) {
-          self._block_load = true;
+        if (!self._blockLoad) {
+          self._blockLoad = true;
           new ApiRequest({
-            'uri': user_api_endpoints.load(tempUser),
+            'uri': userAPIEndpoints.load(tempUser),
             'method': 'GET',
             'json': true,
             'headers': {
@@ -2706,7 +2727,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
               'Content-Type': 'application/json'
             }
           }).then(function (result) {
-            self._block_load = false;
+            self._blockLoad = false;
             console.log('Ionic User: loaded user');
 
             // set the custom data
@@ -2724,7 +2745,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
             deferred.resolve(tempUser);
           }, function (error) {
-            self._block_load = false;
+            self._blockLoad = false;
             console.log('Ionic User:', error);
             deferred.reject(error);
           });
@@ -2738,13 +2759,13 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
     }, {
       key: 'getAPIFormat',
       value: function getAPIFormat() {
-        var custom_data = this.data.data;
-        custom_data.user_id = this.id;
-        custom_data._push = {
+        var customData = this.data.data;
+        customData.user_id = this.id; // eslint-disable-line camelcase
+        customData._push = {
           'android_tokens': this.push.tokens.android,
           'ios_tokens': this.push.tokens.ios
         };
-        return custom_data;
+        return customData;
       }
     }, {
       key: 'getFormat',
@@ -2764,10 +2785,10 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
         var self = this;
         var deferred = new DeferredPromise();
 
-        if (!self._block_save) {
-          self._block_save = true;
+        if (!self._blockSave) {
+          self._blockSave = true;
           new ApiRequest({
-            'uri': user_api_endpoints.save(this),
+            'uri': userAPIEndpoints.save(this),
             'method': 'POST',
             'headers': {
               'Accept': 'application/json',
@@ -2775,18 +2796,18 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
             },
             'body': JSON.stringify(self.getFormat('api'))
           }).then(function (result) {
-            self._block_save = false;
+            self._blockSave = false;
             console.log('Ionic User: saved user');
             deferred.resolve(result);
           }, function (error) {
-            self._block_save = false;
+            self._blockSave = false;
             console.log('Ionic User:', error);
             deferred.reject(error);
           });
         } else {
           console.log("Ionic User: A save operation is already in progress for " + this + ".");
           return false;
-        };
+        }
 
         return deferred.promise;
       }
@@ -2821,7 +2842,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
     }, {
       key: 'id',
       set: function set(v) {
-        if (v && typeof v === 'string' && v != '') {
+        if (v && typeof v === 'string' && v !== '') {
           this._id = v;
           return true;
         } else {
@@ -2835,8 +2856,6 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
     return User;
   })();
-
-  ;
 
   var UserInterface = (function () {
     function UserInterface() {

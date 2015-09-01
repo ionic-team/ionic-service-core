@@ -1,4 +1,4 @@
-if(typeof ionic === 'undefined') { window.ionic = {}; }
+if (typeof ionic === 'undefined') { window.ionic = {}; }
 
 (function() {
 
@@ -10,21 +10,21 @@ if(typeof ionic === 'undefined') { window.ionic = {}; }
     constructor(options) {
       var p = new IonicPromise(function(resolve, reject) {
         request(options, function(err, response, result) {
-          if(err) {
+          if (err) {
             reject(err);
           } else {
             if (response.statusCode < 200 || response.statusCode >= 400) {
-              var err = new Error("Request Failed with status code of " + response.statusCode);
-              reject(err);
+              var _err = new Error("Request Failed with status code of " + response.statusCode);
+              reject(_err);
             } else {
-              resolve({'response': response, 'payload': result});
+              resolve({ 'response': response, 'payload': result });
             }
           }
         });
       });
       return p;
     }
-  };
+  }
 
   class DeferredPromise {
     constructor() {
@@ -34,15 +34,15 @@ if(typeof ionic === 'undefined') { window.ionic = {}; }
         self.resolve = resolve;
         self.reject = reject;
       });
-      var original_then = this.promise.then;
+      var originalThen = this.promise.then;
       this.promise.then = function(ok, fail, update) {
         self._update = update;
-        return original_then.call(self.promise, ok, fail);
+        return originalThen.call(self.promise, ok, fail);
       };
-    };
+    }
 
     notify(value) {
-      if(this._update && (typeof this._update === 'function')) {
+      if (this._update && (typeof this._update === 'function')) {
         this._update(value);
       }
     }
@@ -65,11 +65,11 @@ if(typeof ionic === 'undefined') { window.ionic = {}; }
       } catch(e) {
         console.log('Ionic Core: unable to listen for cordova plugins to be ready');
       }
-    };
+    }
 
     _basicModuleInit(name, module) {
-      if(typeof this.modules[name] === 'undefined') {
-        this.modules[name] = new module();
+      if (typeof this.modules[name] === 'undefined') {
+        this.modules[name] = new module(); // eslint-disable-line new-cap
       }
       return this.modules[name];
     }
@@ -98,44 +98,44 @@ if(typeof ionic === 'undefined') { window.ionic = {}; }
       return this._basicModuleInit('events', ionic.io.util.Events);
     }
 
-    _is_cordova_available() {
+    _isCordovaAvailable() {
       console.log('Ionic Core: searching for cordova.js');
 
-      try {
-        if (window.cordova || cordova) {
-          console.log('Ionic Core: cordova.js has already been loaded');
-          return true;
-        }
-      } catch(e) {}
+      if (typeof cordova !== 'undefined') {
+        console.log('Ionic Core: cordova.js has already been loaded');
+        return true;
+      }
 
       var scripts = document.getElementsByTagName('script');
       var len = scripts.length;
-      for(var i = 0; i < len; i++) {
+      for (var i = 0; i < len; i++) {
         var script = scripts[i].getAttribute('src');
-        if(script) {
+        if (script) {
           var parts = script.split('/');
           var partsLength = 0;
           try {
             partsLength = parts.length;
-            if (parts[partsLength-1] === 'cordova.js') {
+            if (parts[partsLength - 1] === 'cordova.js') {
               console.log('Ionic Core: cordova.js has previously been included.');
               return true;
             }
-          } catch(e) {}
+          } catch(e) {
+            console.log('Ionic Core: encountered error while testing for cordova.js presence, ' + e.toString());
+          }
         }
       }
 
       return false;
-    };
+    }
 
     loadCordova() {
-      if(!this._is_cordova_available()) {
-        var cordova_script = document.createElement('script');
-        var cordova_src = 'cordova.js';
-        switch(this.getDeviceTypeByNavigator()) {
+      if (!this._isCordovaAvailable()) {
+        var cordovaScript = document.createElement('script');
+        var cordovaSrc = 'cordova.js';
+        switch (this.getDeviceTypeByNavigator()) {
           case 'android':
             if (window.location.href.substring(0, 4) === "file") {
-              cordova_src = 'file:///android_asset/www/cordova.js';
+              cordovaSrc = 'file:///android_asset/www/cordova.js';
             }
             break;
 
@@ -144,7 +144,7 @@ if(typeof ionic === 'undefined') { window.ionic = {}; }
             try {
               var resource = window.location.search.match(/cordova_js_bootstrap_resource=(.*?)(&|#|$)/i);
               if (resource) {
-                cordova_src = decodeURI(resource[1]);
+                cordovaSrc = decodeURI(resource[1]);
               }
             } catch(e) {
               console.log('Could not find cordova_js_bootstrap_resource query param');
@@ -158,75 +158,109 @@ if(typeof ionic === 'undefined') { window.ionic = {}; }
           default:
             break;
         }
-        cordova_script.setAttribute('src', cordova_src);
-        document.head.appendChild(cordova_script);
+        cordovaScript.setAttribute('src', cordovaSrc);
+        document.head.appendChild(cordovaScript);
         console.log('Ionic Core: injecting cordova.js');
       }
-    };
+    }
 
+    /**
+     * Determine the device type via the user agent string
+     * @return {string} name of device platform or "unknown" if unable to identify the device
+     */
     getDeviceTypeByNavigator() {
-      return (navigator.userAgent.match(/iPad/i))  == "iPad" ? "ipad" : (navigator.userAgent.match(/iPhone/i))  == "iPhone" ? "iphone" : (navigator.userAgent.match(/Android/i)) == "Android" ? "android" : (navigator.userAgent.match(/BlackBerry/i)) == "BlackBerry" ? "blackberry" : "unknown";
-    };
+      var agent = navigator.userAgent;
 
+      var ipad = agent.match(/iPad/i);
+      if (ipad && (ipad[0].toLowerCase() === 'ipad')) {
+        return 'ipad';
+      }
+
+      var iphone = agent.match(/iPhone/i);
+      if (iphone && (iphone[0].toLowerCase() === 'iphone')) {
+        return 'iphone';
+      }
+
+      var android = agent.match(/Android/i);
+      if (android && (android[0].toLowerCase() === 'android')) {
+        return 'android';
+      }
+
+      return "unknown";
+    }
+
+    /**
+     * Check if the device is an Android device
+     * @return {boolean} True if Android, false otherwise
+     */
     isAndroidDevice() {
       var device = this.getDeviceTypeByNavigator();
-      if(device === 'android') {
-        return true;
-      }
-      return false;
-    };
-
-    isIOSDevice() {
-      var device = this.getDeviceTypeByNavigator();
-      if(device === 'iphone' || device === 'ipad') {
+      if (device === 'android') {
         return true;
       }
       return false;
     }
 
+    /**
+     * Check if the device is an iOS device
+     * @return {boolean} True if iOS, false otherwise
+     */
+    isIOSDevice() {
+      var device = this.getDeviceTypeByNavigator();
+      if (device === 'iphone' || device === 'ipad') {
+        return true;
+      }
+      return false;
+    }
+
+    /**
+     * Bootstrap Ionic Core
+     *
+     * Handles the cordova.js bootstrap
+     * @return {void}
+     */
     bootstrap() {
       this.loadCordova();
-    };
+    }
 
     /**
      * Fire a callback when core + plugins are ready. This will fire immediately if
      * the components have already become available.
      *
-     * @param {Function} Callback function to fire off
+     * @param {function} callback function to fire off
+     * @return {void}
      */
     onReady(callback) {
       var self = this;
-      if(this._pluginsReady) {
+      if (this._pluginsReady) {
         callback(self);
       } else {
-        self._emitter.on('ionic_core:plugins_ready', function(event, data) {
+        self._emitter.on('ionic_core:plugins_ready', function() {
           callback(self);
         });
       }
-    };
+    }
   }
 
-  if(typeof ionic.io === 'undefined') { ionic.io = {}; }
+  if (typeof ionic.io === 'undefined') { ionic.io = {}; }
 
   ionic.io.register = function(namespace, context) {
     context = context || ionic.io;
     var namespaces = namespace.split(".");
     var len = namespaces.length;
-    for(var i = 0; i < len; i++) {
-      if(i > 0) {
+    for (var i = 0; i < len; i++) {
+      if (i > 0) {
         context = context[namespace];
       }
       namespace = namespaces[i];
-      try {
-        if('undefined' === typeof context[namespace]) { context[namespace] = {}; }
-      } catch(e) {}
+      if ('undefined' === typeof context[namespace]) { context[namespace] = {}; }
     }
     return context;
   };
 
   // Main user interface
   ionic.io.init = function() {
-    if(typeof ionic.io.core.main === 'undefined') {
+    if (typeof ionic.io.core.main === 'undefined') {
       ionic.io.core.main = new IonicIOCore();
     }
     return ionic.io.core.main;

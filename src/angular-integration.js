@@ -1,5 +1,5 @@
 // Add Angular integrations if Angular is available
-if((typeof angular === 'object') && angular.module) {
+if ((typeof angular === 'object') && angular.module) {
   angular.module('ionic.service.core', [])
 
   /**
@@ -10,7 +10,7 @@ if((typeof angular === 'object') && angular.module) {
     return {
       '$get': [function() {
         var io = ionic.io.init();
-        return ionic.io.storage;
+        return io.storage;
       }]
     };
   })

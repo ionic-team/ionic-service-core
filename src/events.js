@@ -9,12 +9,12 @@
 
     on(event, callback) {
       return this._emitter.on(event, callback);
-    };
+    }
 
     emit(label, data) {
       return this._emitter.emit(label, data);
     }
-  };
+  }
 
   ionic.io.util.Events = EventEmitter;
 

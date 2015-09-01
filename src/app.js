@@ -2,20 +2,20 @@
 
   class App {
 
-    constructor(app_id, api_key) {
-      if(!app_id || app_id === '') {
+    constructor(appId, apiKey) {
+      if (!appId || appId === '') {
         console.log('Ionic Core: No app_id was provided to IonicApp');
         return false;
       }
 
-      if(!api_key || api_key === '') {
+      if (!apiKey || apiKey === '') {
         console.log('Ionic Core: No api_key was provided to IonicApp');
         return false;
       }
 
       var privateData = {
-        'id': app_id,
-        'apiKey': api_key
+        'id': appId,
+        'apiKey': apiKey
       };
 
       this.privateVar = function(name) {
@@ -25,13 +25,6 @@
       // other config value reference
       this.devPush = null;
       this.gcmKey = null;
-
-      if((typeof config === 'object')) {
-        var x = null;
-        for(x in config) {
-          this[x] = config[x];
-        }
-      }
     }
 
     get id() {
@@ -45,8 +38,8 @@
     toString() {
       return '<IonicApp>';
     }
-  };
+  }
 
-  ionic.io.core.App = App; 
+  ionic.io.core.App = App;
 
 })();

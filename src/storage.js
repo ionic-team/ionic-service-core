@@ -1,5 +1,5 @@
 (function() {
-  
+
   class IonicLocalStorageStrategy {
     constructor() {
 
@@ -7,16 +7,16 @@
 
     get(key) {
       return window.localStorage.getItem(key);
-    };
+    }
 
     remove(key) {
       return window.localStorage.removeItem(key);
-    };
-    
+    }
+
     set(key, value) {
       return window.localStorage.setItem(key, value);
-    };
-  };
+    }
+  }
 
   var objectCache = {};
   var memoryLocks = {};
@@ -29,6 +29,9 @@
 
     /**
      * Stores an object in local storage under the given key
+     * @param {string} key Name of the key to store values in
+     * @param {object} object The object to store with the key
+     * @return {void}
      */
     storeObject(key, object) {
       // Convert object to JSON and store in localStorage
@@ -37,12 +40,13 @@
 
       // Then store it in the object cache
       objectCache[key] = object;
-    };
+    }
 
     /**
      * Either retrieves the cached copy of an object,
      * or the object itself from localStorage.
-     * Returns null if the object couldn't be found.
+     * @param {string} key The name of the key to pull from
+     * @return {mixed} Returns the previously stored Object or null
      */
     retrieveObject(key) {
       // First check to see if it's the object cache
@@ -64,16 +68,16 @@
       } catch (err) {
         return null;
       }
-    };
+    }
 
     /**
      * Locks the async call represented by the given promise and lock key.
      * Only one asyncFunction given by the lockKey can be running at any time.
      *
-     * @param lockKey should be a string representing the name of this async call.
+     * @param {string} lockKey should be a string representing the name of this async call.
      *        This is required for persistence.
-     * @param asyncFunction Returns a promise of the async call.
-     * @returns A new promise, identical to the one returned by asyncFunction,
+     * @param {function} asyncFunction Returns a promise of the async call.
+     * @returns {Promise} A new promise, identical to the one returned by asyncFunction,
      *          but with two new errors: 'in_progress', and 'last_call_interrupted'.
      */
     lockedAsyncCall(lockKey, asyncFunction) {
@@ -118,8 +122,8 @@
       });
 
       return deferred.promise;
-    };
-  };
+    }
+  }
 
   ionic.io.core.Storage = IonicLocalStorage;
 

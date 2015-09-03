@@ -21,12 +21,11 @@ gulp.task('build', ['lint'], function () {
 });
 
 gulp.task('lint', function () {
-    return gulp.src(['src/**/*.js'])
-        .pipe(eslint())
-        .pipe(eslint.failOnError())
-        .pipe(eslint.formatEach());
+  return gulp.src(['src/**/*.js'])
+    .pipe(eslint())
+    .pipe(eslint.failOnError())
+    .pipe(eslint.formatEach());
 });
-
 
 gulp.task('watch', ['build'], function() {
   gulp.watch(['src/**/*.js'], ['build']);

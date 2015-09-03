@@ -2394,8 +2394,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
     }, {
       key: 'getURL',
       value: function getURL(name) {
-        if (this._dev_locations[name]) {
-          return this._dev_locations[name];
+        if (this._devLocations[name]) {
+          return this._devLocations[name];
         } else if (this._locations[name]) {
           return this._locations[name];
         } else {
@@ -2583,6 +2583,9 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
     'load': function load(userModel) {
       return userAPIBase + '/' + userModel.id;
     },
+    'remove': function remove(userModel) {
+      return userAPIBase + '/' + userModel.id;
+    },
     'save': function save() {
       return userAPIBase + '/identify';
     },
@@ -2703,6 +2706,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
       this._blockLoad = false;
       this._blockSave = false;
+      this._blockDelete = false;
       this.push = new PushData();
       this.data = new CustomData();
     }
@@ -2751,7 +2755,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
           });
         } else {
           console.log("Ionic User: A load operation is already in progress for " + this + ".");
-          return false;
+          deferred.reject(false);
         }
 
         return deferred.promise;
@@ -2780,6 +2784,41 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
         return formatted;
       }
     }, {
+      key: 'delete',
+      value: function _delete() {
+        var self = this;
+        var deferred = new DeferredPromise();
+
+        if (!self.valid) {
+          return false;
+        }
+
+        if (!self._blockDelete) {
+          self._blockDelete = true;
+          new ApiRequest({
+            'uri': userAPIEndpoints.remove(this),
+            'method': 'DELETE',
+            'headers': {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json'
+            }
+          }).then(function (result) {
+            self._blockDelete = false;
+            console.log('Ionic User: deleted ' + self);
+            deferred.resolve(result);
+          }, function (error) {
+            self._blockDelete = false;
+            console.log('Ionic User:', error);
+            deferred.reject(error);
+          });
+        } else {
+          console.log("Ionic User: A delete operation is already in progress for " + this + ".");
+          deferred.reject(false);
+        }
+
+        return deferred.promise;
+      }
+    }, {
       key: 'save',
       value: function save() {
         var self = this;
@@ -2806,7 +2845,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
           });
         } else {
           console.log("Ionic User: A save operation is already in progress for " + this + ".");
-          return false;
+          deferred.reject(false);
         }
 
         return deferred.promise;

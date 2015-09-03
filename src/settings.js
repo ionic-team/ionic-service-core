@@ -56,8 +56,8 @@
     }
 
     getURL(name) {
-      if (this._dev_locations[name]) {
-        return this._dev_locations[name];
+      if (this._devLocations[name]) {
+        return this._devLocations[name];
       } else if (this._locations[name]) {
         return this._locations[name];
       } else {

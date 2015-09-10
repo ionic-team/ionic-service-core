@@ -2025,7 +2025,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
         if (!this._isCordovaAvailable()) {
           var cordovaScript = document.createElement('script');
           var cordovaSrc = 'cordova.js';
-          switch (this.getDeviceTypeByNavigator()) {
+          switch (Ionic.IO.Core.getDeviceTypeByNavigator()) {
             case 'android':
               if (window.location.href.substring(0, 4) === "file") {
                 cordovaSrc = 'file:///android_asset/www/cordova.js';

@@ -1,5 +1,8 @@
 (function() {
 
+  var EventEmitter = new Ionic.IO.EventEmitter();
+  var Storage = new Ionic.IO.Storage();
+
   class IonicPlatform {
 
     constructor() {
@@ -9,19 +12,27 @@
       });
       this.logger.info('init');
       this._pluginsReady = false;
-      this._emitter = this.events;
+      this.emitter = this.getEmitter();
 
       try {
         document.addEventListener("deviceready", function() {
           self.logger.info('plugins are ready');
           self._pluginsReady = true;
-          self._emitter.emit('ionic_core:plugins_ready');
+          self.emitter.emit('ionic_core:plugins_ready');
         }, false);
       } catch(e) {
         self.logger.info('unable to listen for cordova plugins to be ready');
       }
 
       this._bootstrap();
+    }
+
+    static getEmitter() {
+      return EventEmitter;
+    }
+
+    static getStorage() {
+      return Storage;
     }
 
     _isCordovaAvailable() {
@@ -191,7 +202,7 @@
       if (this._pluginsReady) {
         callback(self);
       } else {
-        self._emitter.on('ionic_core:plugins_ready', function() {
+        self.emitter.on('ionic_core:plugins_ready', function() {
           callback(self);
         });
       }

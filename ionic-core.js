@@ -1861,35 +1861,37 @@ process.umask = function() { return 0; };
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"_process":3}],5:[function(require,module,exports){
-// Add Angular integrations if Angular is available
 'use strict';
 
-if (typeof angular === 'object' && angular.module) {
-  angular.module('ionic.service.core', [])
+(function () {
+  // Add Angular integrations if Angular is available
+  if (typeof angular === 'object' && angular.module) {
+    angular.module('ionic.service.core', [])
 
-  /**
-   * @private
-   * Provides a safe interface to store objects in persistent memory
-   */
-  .provider('persistentStorage', function () {
-    return {
-      '$get': [function () {
-        var storage = Ionic.getService('Storage');
-        if (!storage) {
-          storage = new Ionic.IO.Storage();
-          Ionic.addService('Storage', storage, true);
-        }
-        return storage;
-      }]
-    };
-  }).factory('$ionicCoreSettings', [function () {
-    return new Ionic.IO.Settings();
-  }]).factory('$ionicUser', [function () {
-    return Ionic.User;
-  }]).run([function () {
-    Ionic.io();
-  }]);
-}
+    /**
+     * @private
+     * Provides a safe interface to store objects in persistent memory
+     */
+    .provider('persistentStorage', function () {
+      return {
+        '$get': [function () {
+          var storage = Ionic.getService('Storage');
+          if (!storage) {
+            storage = new Ionic.IO.Storage();
+            Ionic.addService('Storage', storage, true);
+          }
+          return storage;
+        }]
+      };
+    }).factory('$ionicCoreSettings', [function () {
+      return new Ionic.IO.Settings();
+    }]).factory('$ionicUser', [function () {
+      return Ionic.User;
+    }]).run([function () {
+      Ionic.io();
+    }]);
+  }
+})();
 
 },{}],6:[function(require,module,exports){
 'use strict';
@@ -1961,6 +1963,10 @@ var _createClass = (function () { function defineProperties(target, props) { for
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
 (function () {
+
+  var EventEmitter = new Ionic.IO.EventEmitter();
+  var Storage = new Ionic.IO.Storage();
+
   var IonicPlatform = (function () {
     function IonicPlatform() {
       _classCallCheck(this, IonicPlatform);
@@ -1971,13 +1977,13 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
       });
       this.logger.info('init');
       this._pluginsReady = false;
-      this._emitter = this.events;
+      this.emitter = this.getEmitter();
 
       try {
         document.addEventListener("deviceready", function () {
           self.logger.info('plugins are ready');
           self._pluginsReady = true;
-          self._emitter.emit('ionic_core:plugins_ready');
+          self.emitter.emit('ionic_core:plugins_ready');
         }, false);
       } catch (e) {
         self.logger.info('unable to listen for cordova plugins to be ready');
@@ -2088,12 +2094,22 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
         if (this._pluginsReady) {
           callback(self);
         } else {
-          self._emitter.on('ionic_core:plugins_ready', function () {
+          self.emitter.on('ionic_core:plugins_ready', function () {
             callback(self);
           });
         }
       }
     }], [{
+      key: 'getEmitter',
+      value: function getEmitter() {
+        return EventEmitter;
+      }
+    }, {
+      key: 'getStorage',
+      value: function getStorage() {
+        return Storage;
+      }
+    }, {
       key: 'getDeviceTypeByNavigator',
       value: function getDeviceTypeByNavigator() {
         var agent = navigator.userAgent;

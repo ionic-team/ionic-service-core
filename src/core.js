@@ -1,108 +1,35 @@
-if (typeof ionic === 'undefined') { window.ionic = {}; }
-
 (function() {
 
-  var ionic = window.ionic;
-  var IonicPromise = require("es6-promise").Promise;
-  var request = require("browser-request");
+  class IonicPlatform {
 
-  class APIRequest {
-    constructor(options) {
-      var p = new IonicPromise(function(resolve, reject) {
-        request(options, function(err, response, result) {
-          if (err) {
-            reject(err);
-          } else {
-            if (response.statusCode < 200 || response.statusCode >= 400) {
-              var _err = new Error("Request Failed with status code of " + response.statusCode);
-              reject(_err);
-            } else {
-              resolve({ 'response': response, 'payload': result });
-            }
-          }
-        });
-      });
-      return p;
-    }
-  }
-
-  class DeferredPromise {
     constructor() {
       var self = this;
-      this._update = false;
-      this.promise = new IonicPromise(function(resolve, reject) {
-        self.resolve = resolve;
-        self.reject = reject;
+      this.logger = new Ionic.IO.Logger('Core', {
+        'prefix': 'Ionic Core:'
       });
-      var originalThen = this.promise.then;
-      this.promise.then = function(ok, fail, update) {
-        self._update = update;
-        return originalThen.call(self.promise, ok, fail);
-      };
-    }
-
-    notify(value) {
-      if (this._update && (typeof this._update === 'function')) {
-        this._update(value);
-      }
-    }
-  }
-
-  class IonicIOCore {
-    constructor() {
-      var self = this;
-      console.log('Ionic Core: init');
-      this.modules = {};
+      this.logger.info('init');
       this._pluginsReady = false;
       this._emitter = this.events;
 
       try {
         document.addEventListener("deviceready", function() {
-          console.log('Ionic Core: plugins are ready');
+          self.logger.info('plugins are ready');
           self._pluginsReady = true;
           self._emitter.emit('ionic_core:plugins_ready');
         }, false);
       } catch(e) {
-        console.log('Ionic Core: unable to listen for cordova plugins to be ready');
+        self.logger.info('unable to listen for cordova plugins to be ready');
       }
-    }
 
-    _basicModuleInit(name, module) {
-      if (typeof this.modules[name] === 'undefined') {
-        this.modules[name] = new module(); // eslint-disable-line new-cap
-      }
-      return this.modules[name];
-    }
-
-    get push() {
-      return this._basicModuleInit('push', ionic.io.push.PushService);
-    }
-
-    get deploy() {
-      return this._basicModuleInit('deploy', ionic.io.deploy.DeployService);
-    }
-
-    get settings() {
-      return this._basicModuleInit('settings', ionic.io.core.Settings);
-    }
-
-    get storage() {
-      return this._basicModuleInit('storage', ionic.io.core.Storage);
-    }
-
-    get users() {
-      return this._basicModuleInit('user', ionic.io.core.UserInterface);
-    }
-
-    get events() {
-      return this._basicModuleInit('events', ionic.io.util.Events);
+      this._bootstrap();
     }
 
     _isCordovaAvailable() {
-      console.log('Ionic Core: searching for cordova.js');
+      var self = this;
+      this.logger.info('searching for cordova.js');
 
       if (typeof cordova !== 'undefined') {
-        console.log('Ionic Core: cordova.js has already been loaded');
+        this.logger.info('cordova.js has already been loaded');
         return true;
       }
 
@@ -116,11 +43,11 @@ if (typeof ionic === 'undefined') { window.ionic = {}; }
           try {
             partsLength = parts.length;
             if (parts[partsLength - 1] === 'cordova.js') {
-              console.log('Ionic Core: cordova.js has previously been included.');
+              self.logger.info('cordova.js has previously been included.');
               return true;
             }
           } catch(e) {
-            console.log('Ionic Core: encountered error while testing for cordova.js presence, ' + e.toString());
+            self.logger.info('encountered error while testing for cordova.js presence, ' + e.toString());
           }
         }
       }
@@ -129,6 +56,7 @@ if (typeof ionic === 'undefined') { window.ionic = {}; }
     }
 
     loadCordova() {
+      var self = this;
       if (!this._isCordovaAvailable()) {
         var cordovaScript = document.createElement('script');
         var cordovaSrc = 'cordova.js';
@@ -147,8 +75,8 @@ if (typeof ionic === 'undefined') { window.ionic = {}; }
                 cordovaSrc = decodeURI(resource[1]);
               }
             } catch(e) {
-              console.log('Could not find cordova_js_bootstrap_resource query param');
-              console.log(e);
+              self.logger.info('could not find cordova_js_bootstrap_resource query param');
+              self.logger.info(e);
             }
             break;
 
@@ -160,7 +88,7 @@ if (typeof ionic === 'undefined') { window.ionic = {}; }
         }
         cordovaScript.setAttribute('src', cordovaSrc);
         document.head.appendChild(cordovaScript);
-        console.log('Ionic Core: injecting cordova.js');
+        self.logger.info('injecting cordova.js');
       }
     }
 
@@ -168,7 +96,7 @@ if (typeof ionic === 'undefined') { window.ionic = {}; }
      * Determine the device type via the user agent string
      * @return {string} name of device platform or "unknown" if unable to identify the device
      */
-    getDeviceTypeByNavigator() {
+    static getDeviceTypeByNavigator() {
       var agent = navigator.userAgent;
 
       var ipad = agent.match(/iPad/i);
@@ -193,8 +121,8 @@ if (typeof ionic === 'undefined') { window.ionic = {}; }
      * Check if the device is an Android device
      * @return {boolean} True if Android, false otherwise
      */
-    isAndroidDevice() {
-      var device = this.getDeviceTypeByNavigator();
+    static isAndroidDevice() {
+      var device = Ionic.IO.Core.getDeviceTypeByNavigator();
       if (device === 'android') {
         return true;
       }
@@ -205,8 +133,8 @@ if (typeof ionic === 'undefined') { window.ionic = {}; }
      * Check if the device is an iOS device
      * @return {boolean} True if iOS, false otherwise
      */
-    isIOSDevice() {
-      var device = this.getDeviceTypeByNavigator();
+    static isIOSDevice() {
+      var device = Ionic.IO.Core.getDeviceTypeByNavigator();
       if (device === 'iphone' || device === 'ipad') {
         return true;
       }
@@ -219,8 +147,36 @@ if (typeof ionic === 'undefined') { window.ionic = {}; }
      * Handles the cordova.js bootstrap
      * @return {void}
      */
-    bootstrap() {
+    _bootstrap() {
       this.loadCordova();
+    }
+
+    static deviceConnectedToNetwork(strictMode) {
+      if (typeof strictMode === 'undefined') {
+        strictMode = false;
+      }
+
+      if (typeof navigator.connection === 'undefined' ||
+          typeof navigator.connection.type === 'undefined' ||
+          typeof Connection === 'undefined') {
+        if (!strictMode) {
+          return true;
+        }
+        return false;
+      }
+
+      switch (navigator.connection.type) {
+        case Connection.ETHERNET:
+        case Connection.WIFI:
+        case Connection.CELL_2G:
+        case Connection.CELL_3G:
+        case Connection.CELL_4G:
+        case Connection.CELL:
+          return true;
+
+        default:
+          return false;
+      }
     }
 
     /**
@@ -242,35 +198,6 @@ if (typeof ionic === 'undefined') { window.ionic = {}; }
     }
   }
 
-  if (typeof ionic.io === 'undefined') { ionic.io = {}; }
-
-  ionic.io.register = function(namespace, context) {
-    context = context || ionic.io;
-    var namespaces = namespace.split(".");
-    var len = namespaces.length;
-    for (var i = 0; i < len; i++) {
-      if (i > 0) {
-        context = context[namespace];
-      }
-      namespace = namespaces[i];
-      if ('undefined' === typeof context[namespace]) { context[namespace] = {}; }
-    }
-    return context;
-  };
-
-  // Main user interface
-  ionic.io.init = function() {
-    if (typeof ionic.io.core.main === 'undefined') {
-      ionic.io.core.main = new IonicIOCore();
-    }
-    return ionic.io.core.main;
-  };
-
-  ionic.io.register('core');
-  ionic.io.register('util');
-
-  ionic.io.util.Promise = IonicPromise;
-  ionic.io.util.DeferredPromise = DeferredPromise;
-  ionic.io.util.ApiRequest = APIRequest;
+  Ionic.namespace('IO', 'Core', IonicPlatform);
 
 })();

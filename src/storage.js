@@ -1,6 +1,6 @@
 (function() {
 
-  class IonicLocalStorageStrategy {
+  class PlatformLocalStorageStrategy {
     constructor() {
 
     }
@@ -20,11 +20,11 @@
 
   var objectCache = {};
   var memoryLocks = {};
-  var DeferredPromise = ionic.io.core.DeferredPromise;
+  var DeferredPromise = Ionic.IO.DeferredPromise;
 
-  class IonicLocalStorage {
+  class PlatformLocalStorage {
     constructor() {
-      this.strategy = new IonicLocalStorageStrategy();
+      this.strategy = new PlatformLocalStorageStrategy();
     }
 
     /**
@@ -125,6 +125,6 @@
     }
   }
 
-  ionic.io.core.Storage = IonicLocalStorage;
+  Ionic.namespace('IO', 'Storage', PlatformLocalStorage);
 
 })();

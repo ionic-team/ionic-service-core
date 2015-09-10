@@ -16,6 +16,6 @@
     }
   }
 
-  ionic.io.util.Events = EventEmitter;
+  Ionic.namespace('IO', 'EventEmitter', EventEmitter);
 
 })();

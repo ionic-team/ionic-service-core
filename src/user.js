@@ -1,8 +1,9 @@
 (function() {
 
-  var ApiRequest = ionic.io.util.ApiRequest;
-  var DeferredPromise = ionic.io.util.DeferredPromise;
-  var Settings = new ionic.io.core.Settings();
+  var ApiRequest = Ionic.IO.ApiRequest;
+  var DeferredPromise = Ionic.IO.DeferredPromise;
+  var Settings = new Ionic.IO.Settings();
+  var Core = Ionic.IO.Core;
 
   var userAPIBase = Settings.getURL('api') + '/api/v1/app/' + Settings.get('app_id') + '/users';
   var userAPIEndpoints = {
@@ -46,7 +47,7 @@
       var platform = null;
 
       if ((typeof token === 'undefined') || !token || token === '') {
-        console.log('Ionic Push Data: You need to pass a valid token to addToken()');
+        this.logger.info('you need to pass a valid token to addToken()');
         return false;
       }
 
@@ -54,14 +55,14 @@
         token = token.token;
       }
 
-      if (ionic.io.core.main.isAndroidDevice()) {
+      if (Core.isAndroidDevice()) {
         platform = 'android';
-      } else if (ionic.io.core.main.isIOSDevice()) {
+      } else if (Core.isIOSDevice()) {
         platform = 'ios';
       }
 
       if (platform === null || !this.tokens.hasOwnProperty(platform)) {
-        console.log('Ionic User: Cannot determine the token platform. Are you running on an Android or iOS device?');
+        this.logger.info('cannot determine the token platform. Are you running on an Android or iOS device?');
         return false;
       }
 
@@ -109,6 +110,9 @@
 
   class User {
     constructor() {
+      this.logger = new Ionic.IO.Logger({
+        'prefix': 'Ionic User:'
+      });
       this._blockLoad = false;
       this._blockSave = false;
       this._blockDelete = false;
@@ -116,11 +120,11 @@
       this.data = new CustomData();
     }
 
-    load(id) {
+    static load(id) {
       var self = this;
       var deferred = new DeferredPromise();
 
-      var tempUser = new ionic.io.core.User();
+      var tempUser = new Ionic.User();
       tempUser.id = id;
 
       if (!self._blockLoad) {
@@ -135,7 +139,7 @@
           }
         }).then(function(result) {
           self._blockLoad = false;
-          console.log('Ionic User: loaded user');
+          self.logger.info('loaded user');
 
           // set the custom data
           tempUser.data = new CustomData(result.payload.custom_data);
@@ -153,11 +157,11 @@
           deferred.resolve(tempUser);
         }, function(error) {
             self._blockLoad = false;
-            console.log('Ionic User:', error);
+            self.logger.error(error);
             deferred.reject(error);
           });
       } else {
-        console.log("Ionic User: A load operation is already in progress for " + this + ".");
+        self.logger.info("a load operation is already in progress for " + this + ".");
         deferred.reject(false);
       }
 
@@ -211,15 +215,15 @@
           }
         }).then(function(result) {
           self._blockDelete = false;
-          console.log('Ionic User: deleted ' + self);
+          self.logger.info('deleted ' + self);
           deferred.resolve(result);
         }, function(error) {
             self._blockDelete = false;
-            console.log('Ionic User:', error);
+            self.logger.error(error);
             deferred.reject(error);
           });
       } else {
-        console.log("Ionic User: A delete operation is already in progress for " + this + ".");
+        self.logger.info("a delete operation is already in progress for " + this + ".");
         deferred.reject(false);
       }
 
@@ -242,15 +246,15 @@
           'body': JSON.stringify(self.getFormat('api'))
         }).then(function(result) {
           self._blockSave = false;
-          console.log('Ionic User: saved user');
+          self.logger.info('saved user');
           deferred.resolve(result);
         }, function(error) {
             self._blockSave = false;
-            console.log('Ionic User:', error);
+            self.logger.error(error);
             deferred.reject(error);
           });
       } else {
-        console.log("Ionic User: A save operation is already in progress for " + this + ".");
+        self.logger.info("a save operation is already in progress for " + this + ".");
         deferred.reject(false);
       }
 
@@ -287,25 +291,6 @@
     }
   }
 
-
-  class UserInterface {
-    load(id) {
-      var deferred = new DeferredPromise();
-      var user = new User();
-      user.load(id).then(function(loadedUser) {
-        deferred.resolve(loadedUser);
-      }, function(error) {
-        deferred.reject(error);
-      });
-      return deferred.promise;
-    }
-
-    create() {
-      return new User();
-    }
-  }
-
-  ionic.io.core.User = User;
-  ionic.io.core.UserInterface = UserInterface;
+  Ionic.namespace('Ionic', 'User', User, window);
 
 })();

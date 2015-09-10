@@ -9,37 +9,29 @@ if ((typeof angular === 'object') && angular.module) {
   .provider('persistentStorage', function() {
     return {
       '$get': [function() {
-        var io = ionic.io.init();
-        return io.storage;
+        var storage = Ionic.getService('Storage');
+        if (!storage) {
+          storage = new Ionic.IO.Storage();
+          Ionic.addService('Storage', storage, true);
+        }
+        return storage;
       }]
     };
   })
 
   .factory('$ionicCoreSettings', [
     function() {
-      var io = ionic.io.init();
-      return io.settings;
+      return new Ionic.IO.Settings();
     }
   ])
 
   .factory('$ionicUser', [
     function() {
-      return {
-        'create': function() {
-          var io = ionic.io.init();
-          return io.user.create();
-        },
-
-        'load': function(id) {
-          var io = ionic.io.init();
-          return io.user.load(id);
-        }
-      };
+      return Ionic.User;
     }
   ])
 
   .run([function() {
-    var io = ionic.io.init();
-    io.bootstrap();
+    Ionic.io();
   }]);
 }

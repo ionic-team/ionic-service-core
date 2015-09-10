@@ -12,8 +12,12 @@ module.exports = {
   dist: '.',
 
   jsFiles: [
+    'src/io.js',
+    'src/promise.js',
+    'src/request.js',
     'src/core.js',
     'src/events.js',
+    'src/logger.js',
     'src/storage.js',
     'src/settings.js',
     'src/user.js',

@@ -22,8 +22,9 @@
   "eslintConfig": {
     "extends": "eslint:recommended",
     "globals": {
-      "ionic": true,
-      "angular": true
+      "Ionic": true,
+      "angular": true,
+      "Connection": true
     },
     "env": {
       "browser": true,

@@ -3,13 +3,16 @@
   class App {
 
     constructor(appId, apiKey) {
+      this.logger = new Ionic.IO.Logger({
+        'prefix': 'Ionic App:'
+      });
       if (!appId || appId === '') {
-        console.log('Ionic Core: No app_id was provided to IonicApp');
+        this.logger.info('No app_id was provided');
         return false;
       }
 
       if (!apiKey || apiKey === '') {
-        console.log('Ionic Core: No api_key was provided to IonicApp');
+        this.logger.info('No api_key was provided');
         return false;
       }
 
@@ -36,10 +39,10 @@
     }
 
     toString() {
-      return '<IonicApp>';
+      return '<IonicApp [\'' + this.id + '\'>';
     }
   }
 
-  ionic.io.core.App = App;
+  Ionic.namespace('IO', 'App', App);
 
 })();

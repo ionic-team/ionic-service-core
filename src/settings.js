@@ -1,6 +1,6 @@
 (function() {
 
-  var Settings = class {
+  class Settings {
 
     constructor() {
       this._settings = null;
@@ -19,7 +19,7 @@
     finish() {
       return this;
     }
-  };
+  }
 
   var temp = new Settings()
 
@@ -39,7 +39,7 @@
 
   .finish();
 
-  var CoreSettings = class {
+  class CoreSettings {
 
     constructor() {
       this._locations = {
@@ -64,8 +64,8 @@
         return null;
       }
     }
-  };
+  }
 
-  ionic.io.core.Settings = CoreSettings;
+  Ionic.namespace('IO', 'Settings', CoreSettings);
 
 })();

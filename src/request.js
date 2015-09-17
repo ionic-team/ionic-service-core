@@ -8,6 +8,18 @@
     }
   }
 
+  class Response {
+    constructor() {
+
+    }
+  }
+
+  class APIResponse extends Response {
+    constructor() {
+      super();
+    }
+  }
+
   class APIRequest extends Request {
     constructor(options) {
       super();
@@ -35,6 +47,8 @@
   }
 
   Ionic.namespace('IO', 'Request', Request);
+  Ionic.namespace('IO', 'Response', Response);
   Ionic.namespace('IO', 'ApiRequest', APIRequest);
+  Ionic.namespace('IO', 'ApiResponse', APIResponse);
 
 })();

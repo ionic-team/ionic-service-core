@@ -1972,12 +1972,12 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
       _classCallCheck(this, IonicPlatform);
 
       var self = this;
-      this.logger = new Ionic.IO.Logger('Core', {
+      this.logger = new Ionic.IO.Logger({
         'prefix': 'Ionic Core:'
       });
       this.logger.info('init');
       this._pluginsReady = false;
-      this.emitter = this.getEmitter();
+      this.emitter = Ionic.IO.Core.getEmitter();
 
       try {
         document.addEventListener("deviceready", function () {
@@ -2297,7 +2297,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 (function () {
   var Logger = (function () {
-    function Logger(name, opts) {
+    function Logger(opts) {
       _classCallCheck(this, Logger);
 
       var options = opts || {};
@@ -2402,6 +2402,22 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
     _classCallCheck(this, Request);
   };
 
+  var Response = function Response() {
+    _classCallCheck(this, Response);
+  };
+
+  var APIResponse = (function (_Response) {
+    _inherits(APIResponse, _Response);
+
+    function APIResponse() {
+      _classCallCheck(this, APIResponse);
+
+      _get(Object.getPrototypeOf(APIResponse.prototype), "constructor", this).call(this);
+    }
+
+    return APIResponse;
+  })(Response);
+
   var APIRequest = (function (_Request) {
     _inherits(APIRequest, _Request);
 
@@ -2435,7 +2451,9 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
   })(Request);
 
   Ionic.namespace('IO', 'Request', Request);
+  Ionic.namespace('IO', 'Response', Response);
   Ionic.namespace('IO', 'ApiRequest', APIRequest);
+  Ionic.namespace('IO', 'ApiResponse', APIResponse);
 })();
 
 },{"browser-request":1}],13:[function(require,module,exports){
@@ -2700,6 +2718,9 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
   var DeferredPromise = Ionic.IO.DeferredPromise;
   var Settings = new Ionic.IO.Settings();
   var Core = Ionic.IO.Core;
+  var Storage = Ionic.IO.Core.getStorage();
+
+  var AppUserContext = null;
 
   var userAPIBase = Settings.getURL('api') + '/api/v1/app/' + Settings.get('app_id') + '/users';
   var userAPIEndpoints = {
@@ -2717,6 +2738,35 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
     }
   };
 
+  var UserContext = (function () {
+    function UserContext() {
+      _classCallCheck(this, UserContext);
+    }
+
+    _createClass(UserContext, null, [{
+      key: 'store',
+      value: function store() {
+        Storage.storeObject(UserContext.label, Ionic.User.active);
+      }
+    }, {
+      key: 'load',
+      value: function load() {
+        var data = Storage.retrieveObject(UserContext.label) || false;
+        if (data) {
+          return Ionic.User.fromContext(data);
+        }
+        return false;
+      }
+    }, {
+      key: 'label',
+      get: function get() {
+        return "ionic_io_user_" + Settings.get('app_id');
+      }
+    }]);
+
+    return UserContext;
+  })();
+
   var PushData = (function () {
 
     /**
@@ -2724,15 +2774,22 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
      *
      * Holds push data to use in conjunction with Ionic User models.
      * @constructor
+     * @param {object} tokens Formatted token data
      */
 
-    function PushData() {
+    function PushData(tokens) {
       _classCallCheck(this, PushData);
 
+      this.logger = new Ionic.IO.Logger({
+        'prefix': 'Ionic Push Token:'
+      });
       this.tokens = {
         'android': [],
         'ios': []
       };
+      if (tokens && typeof tokens === 'object') {
+        this.tokens = tokens;
+      }
     }
 
     /**
@@ -2783,14 +2840,28 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
         return true;
       }
+
+      /**
+       * Remove the specified token if it exists in any platform token listing
+       * If it does not exist, nothing is removed, but we will still return success
+       *
+       * @param {ionic.io.push.Token} token Push Token
+       * @return {boolean} False on error, otherwise true
+       */
+    }, {
+      key: 'removeToken',
+      value: function removeToken(token) {
+        token;
+        // todo
+      }
     }]);
 
     return PushData;
   })();
 
-  var CustomData = (function () {
-    function CustomData(data) {
-      _classCallCheck(this, CustomData);
+  var UserData = (function () {
+    function UserData(data) {
+      _classCallCheck(this, UserData);
 
       this.data = {};
       if (typeof data === 'object') {
@@ -2798,7 +2869,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
       }
     }
 
-    _createClass(CustomData, [{
+    _createClass(UserData, [{
       key: 'set',
       value: function set(key, value) {
         this.data[key] = value;
@@ -2810,8 +2881,12 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
       }
     }, {
       key: 'get',
-      value: function get(key) {
-        return this.data[key];
+      value: function get(key, defaultValue) {
+        if (this.data.hasOwnProperty(key)) {
+          return this.data[key];
+        } else {
+          return defaultValue || null;
+        }
       }
     }, {
       key: 'toString',
@@ -2820,7 +2895,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
       }
     }]);
 
-    return CustomData;
+    return UserData;
   })();
 
   var User = (function () {
@@ -2833,20 +2908,46 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
       this._blockLoad = false;
       this._blockSave = false;
       this._blockDelete = false;
+      this._dirty = false;
+      this._fresh = true;
       this.push = new PushData();
-      this.data = new CustomData();
+      this.data = new UserData();
     }
 
     _createClass(User, [{
+      key: 'isDirty',
+      value: function isDirty() {
+        return this._dirty;
+      }
+    }, {
+      key: 'current',
+      value: function current(user) {
+        if (user) {
+          AppUserContext = user;
+          UserContext.store();
+          return AppUserContext;
+        } else {
+          if (!AppUserContext) {
+            AppUserContext = UserContext.load();
+          }
+          return AppUserContext || new Ionic.User();
+        }
+      }
+    }, {
+      key: 'isFresh',
+      value: function isFresh() {
+        return this._fresh;
+      }
+    }, {
       key: 'getAPIFormat',
       value: function getAPIFormat() {
-        var customData = this.data.data;
-        customData.user_id = this.id; // eslint-disable-line camelcase
-        customData._push = {
+        var data = this.data.data;
+        data.user_id = this.id; // eslint-disable-line camelcase
+        data._push = {
           'android_tokens': this.push.tokens.android,
           'ios_tokens': this.push.tokens.ios
         };
-        return customData;
+        return data;
       }
     }, {
       key: 'getFormat',
@@ -2896,6 +2997,13 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
         return deferred.promise;
       }
     }, {
+      key: '_store',
+      value: function _store() {
+        if (this === Ionic.User.active) {
+          UserContext.store();
+        }
+      }
+    }, {
       key: 'save',
       value: function save() {
         var self = this;
@@ -2912,13 +3020,17 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
             },
             'body': JSON.stringify(self.getFormat('api'))
           }).then(function (result) {
-            self._blockSave = false;
+            self._dirty = false;
+            self._fresh = false;
             self.logger.info('saved user');
             deferred.resolve(result);
           }, function (error) {
-            self._blockSave = false;
+            self._dirty = true;
             self.logger.error(error);
             deferred.reject(error);
+          }).then(function () {
+            self._blockSave = false;
+            self._store();
           });
         } else {
           self.logger.info("a save operation is already in progress for " + this + ".");
@@ -2938,14 +3050,27 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
         return this.push.addToken(token);
       }
     }, {
+      key: 'removePushToken',
+      value: function removePushToken(token) {
+        if (!(token instanceof Ionic.PushToken)) {
+          token = new Ionic.PushToken(token);
+        }
+        return this.push.removeToken(token);
+      }
+    }, {
       key: 'set',
       value: function set(key, value) {
         return this.data.set(key, value);
       }
     }, {
       key: 'get',
-      value: function get(key) {
-        return this.data.get(key);
+      value: function get(key, defaultValue) {
+        return this.data.get(key, defaultValue);
+      }
+    }, {
+      key: 'remove',
+      value: function remove(key) {
+        return this.data.unset(key);
       }
     }, {
       key: 'valid',
@@ -2969,16 +3094,26 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
         return this._id || null;
       }
     }], [{
+      key: 'fromContext',
+      value: function fromContext(data) {
+        var user = new Ionic.User();
+        user.id = data._id;
+        user.data = new UserData(data.data);
+        user.push = new PushData(data.push.tokens);
+        user._fresh = data._fresh;
+        user._dirty = data._dirty;
+        return user;
+      }
+    }, {
       key: 'load',
       value: function load(id) {
-        var self = this;
         var deferred = new DeferredPromise();
 
         var tempUser = new Ionic.User();
         tempUser.id = id;
 
-        if (!self._blockLoad) {
-          self._blockLoad = true;
+        if (!tempUser._blockLoad) {
+          tempUser._blockLoad = true;
           new ApiRequest({
             'uri': userAPIEndpoints.load(tempUser),
             'method': 'GET',
@@ -2988,11 +3123,11 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
               'Content-Type': 'application/json'
             }
           }).then(function (result) {
-            self._blockLoad = false;
-            self.logger.info('loaded user');
+            tempUser._blockLoad = false;
+            tempUser.logger.info('loaded user');
 
             // set the custom data
-            tempUser.data = new CustomData(result.payload.custom_data);
+            tempUser.data = new UserData(result.payload.custom_data);
 
             // set the push tokens
             if (result.payload._push && result.payload._push.android_tokens) {
@@ -3003,19 +3138,30 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
             }
 
             tempUser.image = result.payload.image;
+            tempUser._fresh = false;
 
             deferred.resolve(tempUser);
           }, function (error) {
-            self._blockLoad = false;
-            self.logger.error(error);
+            tempUser._blockLoad = false;
+            tempUser.logger.error(error);
             deferred.reject(error);
           });
         } else {
-          self.logger.info("a load operation is already in progress for " + this + ".");
+          tempUser.logger.info("a load operation is already in progress for " + this + ".");
           deferred.reject(false);
         }
 
         return deferred.promise;
+      }
+    }, {
+      key: 'anonymousId',
+      value: function anonymousId() {
+        // this is not guaranteed to be unique
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+          var r = Math.random() * 16 | 0,
+              v = c == 'x' ? r : r & 0x3 | 0x8; //eslint-disable-line
+          return v.toString(16);
+        });
       }
     }]);
 
@@ -3025,4 +3171,4 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
   Ionic.namespace('Ionic', 'User', User, window);
 })();
 
-},{}]},{},[9,11,12,7,8,10,14,13,15,6,5]);
+},{}]},{},[9,11,12,8,10,14,13,7,15,6,5]);

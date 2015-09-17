@@ -7,12 +7,12 @@
 
     constructor() {
       var self = this;
-      this.logger = new Ionic.IO.Logger('Core', {
+      this.logger = new Ionic.IO.Logger({
         'prefix': 'Ionic Core:'
       });
       this.logger.info('init');
       this._pluginsReady = false;
-      this.emitter = this.getEmitter();
+      this.emitter = Ionic.IO.Core.getEmitter();
 
       try {
         document.addEventListener("deviceready", function() {

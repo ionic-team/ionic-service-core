@@ -15,11 +15,11 @@ module.exports = {
     'src/io.js',
     'src/promise.js',
     'src/request.js',
-    'src/core.js',
     'src/events.js',
     'src/logger.js',
     'src/storage.js',
     'src/settings.js',
+    'src/core.js',
     'src/user.js',
     'src/app.js',
     'src/angular-integration.js'

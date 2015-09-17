@@ -1,7 +1,7 @@
 (function() {
 
   class Logger {
-    constructor(name, opts) {
+    constructor(opts) {
       var options = opts || {};
       this._silence = false;
       this._prefix = false;

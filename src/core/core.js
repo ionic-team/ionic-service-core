@@ -26,6 +26,10 @@ export class IonicPlatform {
     this._bootstrap();
   }
 
+  static get Version() {
+    return 'VERSION_STRING';
+  }
+
   static getEmitter() {
     return EventEmitter;
   }

@@ -2193,6 +2193,11 @@ var IonicPlatform = (function () {
           return false;
       }
     }
+  }, {
+    key: "Version",
+    get: function get() {
+      return '0.2.0';
+    }
   }]);
 
   return IonicPlatform;
@@ -2800,6 +2805,11 @@ var UserContext = (function () {
     key: "store",
     value: function store() {
       storage.storeObject(UserContext.label, User.current());
+    }
+  }, {
+    key: "getRawData",
+    value: function getRawData() {
+      return storage.retrieveObject(UserContext.label) || false;
     }
   }, {
     key: "load",

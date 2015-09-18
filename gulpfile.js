@@ -11,14 +11,16 @@ var gulp = require('gulp'),
   eslint = require('gulp-eslint'),
   replace = require('gulp-replace'),
   uglify = require('gulp-uglify'),
-  rename = require('gulp-rename');
+  rename = require('gulp-rename')
+  del = require('del');
 
-gulp.task('pre-build', function() {
-  
+gulp.task('version', ['minify'], function() {
+  return gulp.src('dist/*.js')
+    .pipe(replace('VERSION_STRING', buildConfig.versionData.version))
+    .pipe(gulp.dest('dist'));
 });
 
-
-gulp.task('post-build', function() {
+gulp.task('minify', ['build-bundle'], function() {
   return gulp.src('dist/*.js')
     .pipe(uglify())
     .pipe(rename(function (path) {
@@ -27,29 +29,22 @@ gulp.task('post-build', function() {
     .pipe(gulp.dest('dist'));
 });
 
-gulp.task('build', [
-  'pre-build',
-  'lint',
-  'build-core-module',
-  'build-push-module',
-  'build-deploy-module',
-  'build-analytics-module',
-  'build-bundle',
-  'post-build'
-]);
+gulp.task('build', ['version']);
 
-gulp.task('build-core-module', ['lint'], function () {
+gulp.task('build-core-module', ['clean'], function () {
+  var stream = null;
   browserify({
     entries: buildConfig.sourceFiles.core,
     debug: false,
     transform: [babelify]
   }).bundle()
   .on("error", function (err) { console.log("Error : " + err.message); })
-  .pipe(fs.createWriteStream(buildConfig.dist + "/core.js"));
+  .pipe(steam = fs.createWriteStream(buildConfig.dist + "/core.js"));
+  return stream;
 });
 
-gulp.task('build-push-module', ['lint'], function () {
-  browserify({
+gulp.task('build-push-module', ['build-core-module'], function () {
+  return browserify({
     entries: buildConfig.sourceFiles.push,
     debug: false,
     transform: [babelify]
@@ -58,8 +53,8 @@ gulp.task('build-push-module', ['lint'], function () {
   .pipe(fs.createWriteStream(buildConfig.dist + "/push.js"));
 });
 
-gulp.task('build-deploy-module', ['lint'], function () {
-  browserify({
+gulp.task('build-deploy-module', ['build-push-module'], function () {
+  return browserify({
     entries: buildConfig.sourceFiles.deploy,
     debug: false,
     transform: [babelify]
@@ -68,8 +63,8 @@ gulp.task('build-deploy-module', ['lint'], function () {
   .pipe(fs.createWriteStream(buildConfig.dist + "/deploy.js"));
 });
 
-gulp.task('build-analytics-module', ['lint'], function () {
-  browserify({
+gulp.task('build-analytics-module', ['build-deploy-module'], function () {
+  return browserify({
     entries: buildConfig.sourceFiles.analytics,
     debug: false,
     transform: [babelify]
@@ -78,14 +73,22 @@ gulp.task('build-analytics-module', ['lint'], function () {
   .pipe(fs.createWriteStream(buildConfig.dist + "/analytics.js"));
 });
 
-gulp.task('build-bundle', ['lint'], function () {
-  browserify({
+gulp.task('test', function() {
+
+});
+
+gulp.task('build-bundle', ['build-analytics-module'], function () {
+  return browserify({
     entries: buildConfig.sourceFiles.bundle,
     debug: false,
     transform: [babelify]
   }).bundle()
   .on("error", function (err) { console.log("Error : " + err.message); })
   .pipe(fs.createWriteStream(buildConfig.dist + "/ionic.io.bundle.js"));
+});
+
+gulp.task('clean', ['lint'], function() {
+  return del(['dist/**/*']);
 });
 
 gulp.task('lint', function () {

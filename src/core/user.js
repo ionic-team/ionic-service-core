@@ -36,6 +36,10 @@ class UserContext {
     storage.storeObject(UserContext.label, User.current());
   }
 
+  static getRawData() {
+    return storage.retrieveObject(UserContext.label) || false;
+  }
+
   static load() {
     var data = storage.retrieveObject(UserContext.label) || false;
     if (data) {

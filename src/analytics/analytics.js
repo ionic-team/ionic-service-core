@@ -4,6 +4,7 @@ import { Settings } from "../core/settings";
 import { IonicPlatform } from "../core/core";
 import { Logger } from "../core/logger";
 import { BucketStorage } from "./storage";
+import { User } from "../core/user";
 
 var settings = new Settings();
 
@@ -35,17 +36,13 @@ export class Analytics {
     }
   }
 
-  static get version() {
-    return 'ANALYTICS_VERSION_STRING';
-  }
-
   _addGlobalPropertyDefaults() {
     var self = this;
     self.setGlobalProperties(function(eventCollection, eventData) {
-      // eventData._user = JSON.parse(JSON.stringify($ionicUser.get());
+      eventData._user = JSON.parse(JSON.stringify(User.current()));
       eventData._app = {
         "app_id": settings.get('app_id'), // eslint-disable-line
-        "analytics_version": Ionic.Analytics.version
+        "analytics_version": IonicPlatform.Version
       };
     });
   }

@@ -20,5 +20,3 @@ export class BucketStorage {
     return this.name + '_' + key + '_' + settings.get('app_id');
   }
 }
-
-Ionic.namespace('Ionic.AnalyticStorage', 'BucketStorage', BucketStorage, window);

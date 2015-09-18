@@ -1883,6 +1883,8 @@ var _coreLogger = require("../core/logger");
 
 var _storage = require("./storage");
 
+var _coreUser = require("../core/user");
+
 var settings = new _coreSettings.Settings();
 
 var ANALYTICS_KEY = null;
@@ -1919,10 +1921,10 @@ var Analytics = (function () {
     value: function _addGlobalPropertyDefaults() {
       var self = this;
       self.setGlobalProperties(function (eventCollection, eventData) {
-        // eventData._user = JSON.parse(JSON.stringify($ionicUser.get());
+        eventData._user = JSON.parse(JSON.stringify(_coreUser.User.current()));
         eventData._app = {
           "app_id": settings.get('app_id'), // eslint-disable-line
-          "analytics_version": Ionic.Analytics.version
+          "analytics_version": _coreCore.IonicPlatform.Version
         };
       });
     }
@@ -2249,11 +2251,6 @@ var Analytics = (function () {
     get: function get() {
       return this._dispatchIntervalTime;
     }
-  }], [{
-    key: "version",
-    get: function get() {
-      return 'ANALYTICS_VERSION_STRING';
-    }
   }]);
 
   return Analytics;
@@ -2261,7 +2258,7 @@ var Analytics = (function () {
 
 exports.Analytics = Analytics;
 
-},{"../core/core":12,"../core/logger":15,"../core/promise":16,"../core/request":17,"../core/settings":18,"./storage":9}],6:[function(require,module,exports){
+},{"../core/core":12,"../core/logger":15,"../core/promise":16,"../core/request":17,"../core/settings":18,"../core/user":20,"./storage":9}],6:[function(require,module,exports){
 // Add Angular integrations if Angular is available
 'use strict';
 
@@ -2588,8 +2585,6 @@ var BucketStorage = (function () {
 })();
 
 exports.BucketStorage = BucketStorage;
-
-Ionic.namespace('Ionic.AnalyticStorage', 'BucketStorage', BucketStorage, window);
 
 },{"../core/settings":18}],10:[function(require,module,exports){
 // Add Angular integrations if Angular is available
@@ -2923,6 +2918,11 @@ var IonicPlatform = (function () {
         default:
           return false;
       }
+    }
+  }, {
+    key: "Version",
+    get: function get() {
+      return '0.2.0';
     }
   }]);
 
@@ -3531,6 +3531,11 @@ var UserContext = (function () {
     key: "store",
     value: function store() {
       storage.storeObject(UserContext.label, User.current());
+    }
+  }, {
+    key: "getRawData",
+    value: function getRawData() {
+      return storage.retrieveObject(UserContext.label) || false;
     }
   }, {
     key: "load",

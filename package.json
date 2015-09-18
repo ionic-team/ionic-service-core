@@ -1,6 +1,6 @@
 {
   "name": "ionic-service-core",
-  "version": "0.1.10",
+  "version": "0.2.0",
   "description": "Ionic Core Component",
   "repository": {
     "type": "git",
@@ -139,8 +139,9 @@
     "babelify": "^6.2.0",
     "browser-request": "^0.3.3",
     "browserify": "^11.0.1",
+    "del": "^2.0.2",
     "es6-promise": "^3.0.2",
-    "gulp": "^3.7.0",
+    "gulp": "^3.9.0",
     "gulp-babel": "^5.2.0",
     "gulp-concat": "^2.2.0",
     "gulp-eslint": "^1.0.0",
@@ -148,6 +149,7 @@
     "gulp-header": "^1.0.2",
     "gulp-rename": "^1.2.2",
     "gulp-replace": "^0.5.4",
+    "gulp-rimraf": "^0.1.1",
     "gulp-uglify": "^1.4.1",
     "gulp-util": "^2.2.16",
     "gulp-watch": "^0.6.5"

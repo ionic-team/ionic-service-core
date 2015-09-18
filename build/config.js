@@ -12,7 +12,6 @@ module.exports = {
   dist: '.',
 
   jsFiles: [
-    'src/io.js',
     'src/promise.js',
     'src/request.js',
     'src/events.js',
@@ -22,6 +21,7 @@ module.exports = {
     'src/core.js',
     'src/user.js',
     'src/app.js',
+    'src/es5.js',
     'src/angular-integration.js'
   ],
 

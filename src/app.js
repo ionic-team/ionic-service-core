@@ -1,48 +1,44 @@
-(function() {
+import { Logger } from "./logger";
 
-  class App {
+export class App {
 
-    constructor(appId, apiKey) {
-      this.logger = new Ionic.IO.Logger({
-        'prefix': 'Ionic App:'
-      });
-      if (!appId || appId === '') {
-        this.logger.info('No app_id was provided');
-        return false;
-      }
-
-      if (!apiKey || apiKey === '') {
-        this.logger.info('No api_key was provided');
-        return false;
-      }
-
-      var privateData = {
-        'id': appId,
-        'apiKey': apiKey
-      };
-
-      this.privateVar = function(name) {
-        return privateData[name] || null;
-      };
-
-      // other config value reference
-      this.devPush = null;
-      this.gcmKey = null;
+  constructor(appId, apiKey) {
+    this.logger = new Logger({
+      'prefix': 'Ionic App:'
+    });
+    if (!appId || appId === '') {
+      this.logger.info('No app_id was provided');
+      return false;
     }
 
-    get id() {
-      return this.privateVar('id');
+    if (!apiKey || apiKey === '') {
+      this.logger.info('No api_key was provided');
+      return false;
     }
 
-    get apiKey() {
-      return this.privateVar('apiKey');
-    }
+    var privateData = {
+      'id': appId,
+      'apiKey': apiKey
+    };
 
-    toString() {
-      return '<IonicApp [\'' + this.id + '\'>';
-    }
+    this.privateVar = function(name) {
+      return privateData[name] || null;
+    };
+
+    // other config value reference
+    this.devPush = null;
+    this.gcmKey = null;
   }
 
-  Ionic.namespace('IO', 'App', App);
+  get id() {
+    return this.privateVar('id');
+  }
 
-})();
+  get apiKey() {
+    return this.privateVar('apiKey');
+  }
+
+  toString() {
+    return '<IonicApp [\'' + this.id + '\'>';
+  }
+}

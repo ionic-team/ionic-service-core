@@ -1896,497 +1896,534 @@ process.umask = function() { return 0; };
 },{}],6:[function(require,module,exports){
 'use strict';
 
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
-
-(function () {
-  var App = (function () {
-    function App(appId, apiKey) {
-      _classCallCheck(this, App);
-
-      this.logger = new Ionic.IO.Logger({
-        'prefix': 'Ionic App:'
-      });
-      if (!appId || appId === '') {
-        this.logger.info('No app_id was provided');
-        return false;
-      }
-
-      if (!apiKey || apiKey === '') {
-        this.logger.info('No api_key was provided');
-        return false;
-      }
-
-      var privateData = {
-        'id': appId,
-        'apiKey': apiKey
-      };
-
-      this.privateVar = function (name) {
-        return privateData[name] || null;
-      };
-
-      // other config value reference
-      this.devPush = null;
-      this.gcmKey = null;
-    }
-
-    _createClass(App, [{
-      key: 'toString',
-      value: function toString() {
-        return '<IonicApp [\'' + this.id + '\'>';
-      }
-    }, {
-      key: 'id',
-      get: function get() {
-        return this.privateVar('id');
-      }
-    }, {
-      key: 'apiKey',
-      get: function get() {
-        return this.privateVar('apiKey');
-      }
-    }]);
-
-    return App;
-  })();
-
-  Ionic.namespace('IO', 'App', App);
-})();
-
-},{}],7:[function(require,module,exports){
-'use strict';
+Object.defineProperty(exports, '__esModule', {
+  value: true
+});
 
 var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
-(function () {
+var _logger = require("./logger");
 
-  var EventEmitter = new Ionic.IO.EventEmitter();
-  var Storage = new Ionic.IO.Storage();
+var App = (function () {
+  function App(appId, apiKey) {
+    _classCallCheck(this, App);
 
-  var IonicPlatform = (function () {
-    function IonicPlatform() {
-      _classCallCheck(this, IonicPlatform);
-
-      var self = this;
-      this.logger = new Ionic.IO.Logger({
-        'prefix': 'Ionic Core:'
-      });
-      this.logger.info('init');
-      this._pluginsReady = false;
-      this.emitter = Ionic.IO.Core.getEmitter();
-
-      try {
-        document.addEventListener("deviceready", function () {
-          self.logger.info('plugins are ready');
-          self._pluginsReady = true;
-          self.emitter.emit('ionic_core:plugins_ready');
-        }, false);
-      } catch (e) {
-        self.logger.info('unable to listen for cordova plugins to be ready');
-      }
-
-      this._bootstrap();
-    }
-
-    _createClass(IonicPlatform, [{
-      key: '_isCordovaAvailable',
-      value: function _isCordovaAvailable() {
-        var self = this;
-        this.logger.info('searching for cordova.js');
-
-        if (typeof cordova !== 'undefined') {
-          this.logger.info('cordova.js has already been loaded');
-          return true;
-        }
-
-        var scripts = document.getElementsByTagName('script');
-        var len = scripts.length;
-        for (var i = 0; i < len; i++) {
-          var script = scripts[i].getAttribute('src');
-          if (script) {
-            var parts = script.split('/');
-            var partsLength = 0;
-            try {
-              partsLength = parts.length;
-              if (parts[partsLength - 1] === 'cordova.js') {
-                self.logger.info('cordova.js has previously been included.');
-                return true;
-              }
-            } catch (e) {
-              self.logger.info('encountered error while testing for cordova.js presence, ' + e.toString());
-            }
-          }
-        }
-
-        return false;
-      }
-    }, {
-      key: 'loadCordova',
-      value: function loadCordova() {
-        var self = this;
-        if (!this._isCordovaAvailable()) {
-          var cordovaScript = document.createElement('script');
-          var cordovaSrc = 'cordova.js';
-          switch (Ionic.IO.Core.getDeviceTypeByNavigator()) {
-            case 'android':
-              if (window.location.href.substring(0, 4) === "file") {
-                cordovaSrc = 'file:///android_asset/www/cordova.js';
-              }
-              break;
-
-            case 'ipad':
-            case 'iphone':
-              try {
-                var resource = window.location.search.match(/cordova_js_bootstrap_resource=(.*?)(&|#|$)/i);
-                if (resource) {
-                  cordovaSrc = decodeURI(resource[1]);
-                }
-              } catch (e) {
-                self.logger.info('could not find cordova_js_bootstrap_resource query param');
-                self.logger.info(e);
-              }
-              break;
-
-            case 'unknown':
-              return false;
-
-            default:
-              break;
-          }
-          cordovaScript.setAttribute('src', cordovaSrc);
-          document.head.appendChild(cordovaScript);
-          self.logger.info('injecting cordova.js');
-        }
-      }
-
-      /**
-       * Determine the device type via the user agent string
-       * @return {string} name of device platform or "unknown" if unable to identify the device
-       */
-    }, {
-      key: '_bootstrap',
-
-      /**
-       * Bootstrap Ionic Core
-       *
-       * Handles the cordova.js bootstrap
-       * @return {void}
-       */
-      value: function _bootstrap() {
-        this.loadCordova();
-      }
-    }, {
-      key: 'onReady',
-
-      /**
-       * Fire a callback when core + plugins are ready. This will fire immediately if
-       * the components have already become available.
-       *
-       * @param {function} callback function to fire off
-       * @return {void}
-       */
-      value: function onReady(callback) {
-        var self = this;
-        if (this._pluginsReady) {
-          callback(self);
-        } else {
-          self.emitter.on('ionic_core:plugins_ready', function () {
-            callback(self);
-          });
-        }
-      }
-    }], [{
-      key: 'getEmitter',
-      value: function getEmitter() {
-        return EventEmitter;
-      }
-    }, {
-      key: 'getStorage',
-      value: function getStorage() {
-        return Storage;
-      }
-    }, {
-      key: 'getDeviceTypeByNavigator',
-      value: function getDeviceTypeByNavigator() {
-        var agent = navigator.userAgent;
-
-        var ipad = agent.match(/iPad/i);
-        if (ipad && ipad[0].toLowerCase() === 'ipad') {
-          return 'ipad';
-        }
-
-        var iphone = agent.match(/iPhone/i);
-        if (iphone && iphone[0].toLowerCase() === 'iphone') {
-          return 'iphone';
-        }
-
-        var android = agent.match(/Android/i);
-        if (android && android[0].toLowerCase() === 'android') {
-          return 'android';
-        }
-
-        return "unknown";
-      }
-
-      /**
-       * Check if the device is an Android device
-       * @return {boolean} True if Android, false otherwise
-       */
-    }, {
-      key: 'isAndroidDevice',
-      value: function isAndroidDevice() {
-        var device = Ionic.IO.Core.getDeviceTypeByNavigator();
-        if (device === 'android') {
-          return true;
-        }
-        return false;
-      }
-
-      /**
-       * Check if the device is an iOS device
-       * @return {boolean} True if iOS, false otherwise
-       */
-    }, {
-      key: 'isIOSDevice',
-      value: function isIOSDevice() {
-        var device = Ionic.IO.Core.getDeviceTypeByNavigator();
-        if (device === 'iphone' || device === 'ipad') {
-          return true;
-        }
-        return false;
-      }
-    }, {
-      key: 'deviceConnectedToNetwork',
-      value: function deviceConnectedToNetwork(strictMode) {
-        if (typeof strictMode === 'undefined') {
-          strictMode = false;
-        }
-
-        if (typeof navigator.connection === 'undefined' || typeof navigator.connection.type === 'undefined' || typeof Connection === 'undefined') {
-          if (!strictMode) {
-            return true;
-          }
-          return false;
-        }
-
-        switch (navigator.connection.type) {
-          case Connection.ETHERNET:
-          case Connection.WIFI:
-          case Connection.CELL_2G:
-          case Connection.CELL_3G:
-          case Connection.CELL_4G:
-          case Connection.CELL:
-            return true;
-
-          default:
-            return false;
-        }
-      }
-    }]);
-
-    return IonicPlatform;
-  })();
-
-  Ionic.namespace('IO', 'Core', IonicPlatform);
-})();
-
-},{}],8:[function(require,module,exports){
-'use strict';
-
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
-
-(function () {
-
-  var _EventEmitter = require("events");
-
-  var EventEmitter = (function () {
-    function EventEmitter() {
-      _classCallCheck(this, EventEmitter);
-
-      this._emitter = new _EventEmitter();
-    }
-
-    _createClass(EventEmitter, [{
-      key: 'on',
-      value: function on(event, callback) {
-        return this._emitter.on(event, callback);
-      }
-    }, {
-      key: 'emit',
-      value: function emit(label, data) {
-        return this._emitter.emit(label, data);
-      }
-    }]);
-
-    return EventEmitter;
-  })();
-
-  Ionic.namespace('IO', 'EventEmitter', EventEmitter);
-})();
-
-},{"events":2}],9:[function(require,module,exports){
-'use strict';
-
-if (typeof Ionic === 'undefined') {
-  window.Ionic = {};
-}
-
-(function () {
-
-  // Provider a single storage for services that have previously been registered
-  var serviceStorage = {};
-
-  Ionic.io = function () {
-    if (typeof Ionic.IO.main === 'undefined') {
-      Ionic.IO.main = new Ionic.IO.Core();
-    }
-    return Ionic.IO.main;
-  };
-
-  Ionic.getService = function (name) {
-    if (typeof serviceStorage[name] === 'undefined' || !serviceStorage[name]) {
+    this.logger = new _logger.Logger({
+      'prefix': 'Ionic App:'
+    });
+    if (!appId || appId === '') {
+      this.logger.info('No app_id was provided');
       return false;
     }
-    return serviceStorage[name];
-  };
 
-  Ionic.addService = function (name, service, force) {
-    if (service && typeof serviceStorage[name] === 'undefined') {
-      serviceStorage[name] = service;
-    } else if (service && force) {
-      serviceStorage[name] = service;
+    if (!apiKey || apiKey === '') {
+      this.logger.info('No api_key was provided');
+      return false;
     }
-  };
 
-  Ionic.removeService = function (name) {
-    if (typeof serviceStorage[name] !== 'undefined') {
-      delete serviceStorage[name];
-    }
-  };
+    var privateData = {
+      'id': appId,
+      'apiKey': apiKey
+    };
 
-  Ionic.namespace = function (namespace, name, cls, context) {
-    context = context || Ionic;
-    var namespaces = namespace.split(".");
-    var len = namespaces.length;
-    for (var i = 0; i < len; i++) {
-      if (i > 0) {
-        context = context[namespace];
-      }
-      namespace = namespaces[i];
-      if ('undefined' === typeof context[namespace]) {
-        context[namespace] = {};
-      }
+    this.privateVar = function (name) {
+      return privateData[name] || null;
+    };
+
+    // other config value reference
+    this.devPush = null;
+    this.gcmKey = null;
+  }
+
+  _createClass(App, [{
+    key: 'toString',
+    value: function toString() {
+      return '<IonicApp [\'' + this.id + '\'>';
     }
-    context[namespace][name] = cls;
-    return context;
-  };
+  }, {
+    key: 'id',
+    get: function get() {
+      return this.privateVar('id');
+    }
+  }, {
+    key: 'apiKey',
+    get: function get() {
+      return this.privateVar('apiKey');
+    }
+  }]);
+
+  return App;
 })();
 
-},{}],10:[function(require,module,exports){
+exports.App = App;
+
+},{"./logger":10}],7:[function(require,module,exports){
 "use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
 
 var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-(function () {
-  var Logger = (function () {
-    function Logger(opts) {
-      _classCallCheck(this, Logger);
+var _events = require("./events");
 
-      var options = opts || {};
-      this._silence = false;
-      this._prefix = false;
-      this._options = options;
-      this._bootstrap();
+var _storage = require("./storage");
+
+var _logger = require("./logger");
+
+var IonicPlatform = (function () {
+  function IonicPlatform() {
+    _classCallCheck(this, IonicPlatform);
+
+    var self = this;
+    this.logger = new _logger.Logger({
+      'prefix': 'Ionic Core:'
+    });
+    this.logger.info('init');
+    this._pluginsReady = false;
+    this.emitter = IonicPlatform.getEmitter();
+
+    try {
+      document.addEventListener("deviceready", function () {
+        self.logger.info('plugins are ready');
+        self._pluginsReady = true;
+        self.emitter.emit('ionic_core:plugins_ready');
+      }, false);
+    } catch (e) {
+      self.logger.info('unable to listen for cordova plugins to be ready');
     }
 
-    _createClass(Logger, [{
-      key: "_bootstrap",
-      value: function _bootstrap() {
-        if (this._options.prefix) {
-          this._prefix = this._options.prefix;
-        }
+    this._bootstrap();
+  }
+
+  _createClass(IonicPlatform, [{
+    key: "_isCordovaAvailable",
+    value: function _isCordovaAvailable() {
+      var self = this;
+      this.logger.info('searching for cordova.js');
+
+      if (typeof cordova !== 'undefined') {
+        this.logger.info('cordova.js has already been loaded');
+        return true;
       }
-    }, {
-      key: "info",
-      value: function info(data) {
-        if (!this._silence) {
-          if (this._prefix) {
-            console.log(this._prefix, data);
-          } else {
-            console.log(data);
+
+      var scripts = document.getElementsByTagName('script');
+      var len = scripts.length;
+      for (var i = 0; i < len; i++) {
+        var script = scripts[i].getAttribute('src');
+        if (script) {
+          var parts = script.split('/');
+          var partsLength = 0;
+          try {
+            partsLength = parts.length;
+            if (parts[partsLength - 1] === 'cordova.js') {
+              self.logger.info('cordova.js has previously been included.');
+              return true;
+            }
+          } catch (e) {
+            self.logger.info('encountered error while testing for cordova.js presence, ' + e.toString());
           }
         }
       }
-    }, {
-      key: "error",
-      value: function error(data) {
-        if (this._prefix) {
-          console.error(this._prefix, data);
-        } else {
-          console.error(data);
-        }
-      }
-    }]);
 
-    return Logger;
-  })();
-
-  Ionic.IO.Logger = Logger;
-})();
-
-},{}],11:[function(require,module,exports){
-'use strict';
-
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
-
-(function () {
-  var ES6Promise = require("es6-promise").Promise;
-
-  var DeferredPromise = (function () {
-    function DeferredPromise() {
-      _classCallCheck(this, DeferredPromise);
-
+      return false;
+    }
+  }, {
+    key: "loadCordova",
+    value: function loadCordova() {
       var self = this;
-      this._update = false;
-      this.promise = new ES6Promise(function (resolve, reject) {
-        self.resolve = resolve;
-        self.reject = reject;
-      });
-      var originalThen = this.promise.then;
-      this.promise.then = function (ok, fail, update) {
-        self._update = update;
-        return originalThen.call(self.promise, ok, fail);
-      };
+      if (!this._isCordovaAvailable()) {
+        var cordovaScript = document.createElement('script');
+        var cordovaSrc = 'cordova.js';
+        switch (IonicPlatform.getDeviceTypeByNavigator()) {
+          case 'android':
+            if (window.location.href.substring(0, 4) === "file") {
+              cordovaSrc = 'file:///android_asset/www/cordova.js';
+            }
+            break;
+
+          case 'ipad':
+          case 'iphone':
+            try {
+              var resource = window.location.search.match(/cordova_js_bootstrap_resource=(.*?)(&|#|$)/i);
+              if (resource) {
+                cordovaSrc = decodeURI(resource[1]);
+              }
+            } catch (e) {
+              self.logger.info('could not find cordova_js_bootstrap_resource query param');
+              self.logger.info(e);
+            }
+            break;
+
+          case 'unknown':
+            return false;
+
+          default:
+            break;
+        }
+        cordovaScript.setAttribute('src', cordovaSrc);
+        document.head.appendChild(cordovaScript);
+        self.logger.info('injecting cordova.js');
+      }
     }
 
-    _createClass(DeferredPromise, [{
-      key: 'notify',
-      value: function notify(value) {
-        if (this._update && typeof this._update === 'function') {
-          this._update(value);
+    /**
+     * Determine the device type via the user agent string
+     * @return {string} name of device platform or "unknown" if unable to identify the device
+     */
+  }, {
+    key: "_bootstrap",
+
+    /**
+     * Bootstrap Ionic Core
+     *
+     * Handles the cordova.js bootstrap
+     * @return {void}
+     */
+    value: function _bootstrap() {
+      this.loadCordova();
+    }
+  }, {
+    key: "onReady",
+
+    /**
+     * Fire a callback when core + plugins are ready. This will fire immediately if
+     * the components have already become available.
+     *
+     * @param {function} callback function to fire off
+     * @return {void}
+     */
+    value: function onReady(callback) {
+      var self = this;
+      if (this._pluginsReady) {
+        callback(self);
+      } else {
+        self.emitter.on('ionic_core:plugins_ready', function () {
+          callback(self);
+        });
+      }
+    }
+  }], [{
+    key: "getEmitter",
+    value: function getEmitter() {
+      return _events.EventEmitter;
+    }
+  }, {
+    key: "getStorage",
+    value: function getStorage() {
+      return _storage.Storage;
+    }
+  }, {
+    key: "getDeviceTypeByNavigator",
+    value: function getDeviceTypeByNavigator() {
+      var agent = navigator.userAgent;
+
+      var ipad = agent.match(/iPad/i);
+      if (ipad && ipad[0].toLowerCase() === 'ipad') {
+        return 'ipad';
+      }
+
+      var iphone = agent.match(/iPhone/i);
+      if (iphone && iphone[0].toLowerCase() === 'iphone') {
+        return 'iphone';
+      }
+
+      var android = agent.match(/Android/i);
+      if (android && android[0].toLowerCase() === 'android') {
+        return 'android';
+      }
+
+      return "unknown";
+    }
+
+    /**
+     * Check if the device is an Android device
+     * @return {boolean} True if Android, false otherwise
+     */
+  }, {
+    key: "isAndroidDevice",
+    value: function isAndroidDevice() {
+      var device = IonicPlatform.getDeviceTypeByNavigator();
+      if (device === 'android') {
+        return true;
+      }
+      return false;
+    }
+
+    /**
+     * Check if the device is an iOS device
+     * @return {boolean} True if iOS, false otherwise
+     */
+  }, {
+    key: "isIOSDevice",
+    value: function isIOSDevice() {
+      var device = IonicPlatform.getDeviceTypeByNavigator();
+      if (device === 'iphone' || device === 'ipad') {
+        return true;
+      }
+      return false;
+    }
+  }, {
+    key: "deviceConnectedToNetwork",
+    value: function deviceConnectedToNetwork(strictMode) {
+      if (typeof strictMode === 'undefined') {
+        strictMode = false;
+      }
+
+      if (typeof navigator.connection === 'undefined' || typeof navigator.connection.type === 'undefined' || typeof Connection === 'undefined') {
+        if (!strictMode) {
+          return true;
+        }
+        return false;
+      }
+
+      switch (navigator.connection.type) {
+        case Connection.ETHERNET:
+        case Connection.WIFI:
+        case Connection.CELL_2G:
+        case Connection.CELL_3G:
+        case Connection.CELL_4G:
+        case Connection.CELL:
+          return true;
+
+        default:
+          return false;
+      }
+    }
+  }]);
+
+  return IonicPlatform;
+})();
+
+exports.IonicPlatform = IonicPlatform;
+
+},{"./events":9,"./logger":10,"./storage":14}],8:[function(require,module,exports){
+"use strict";
+
+var _app = require("./app");
+
+var _core = require("./core");
+
+var _events = require("./events");
+
+var _logger = require("./logger");
+
+var _promise = require("./promise");
+
+var _request = require("./request");
+
+var _settings = require("./settings");
+
+var _storage = require("./storage");
+
+var _user = require("./user");
+
+// Declare the window object
+if (typeof Ionic === 'undefined') {
+  window.Ionic = {};
+}
+
+// Ionic Namespace
+Ionic.Core = _core.IonicPlatform;
+Ionic.User = _user.User;
+
+// IO Namespace
+Ionic.IO = {};
+Ionic.IO.App = _app.App;
+Ionic.IO.EventEmitter = _events.EventEmitter;
+Ionic.IO.Logger = _logger.Logger;
+Ionic.IO.Promise = _promise.Promise;
+Ionic.IO.DeferredPromise = _promise.DeferredPromise;
+Ionic.IO.Request = _request.Request;
+Ionic.IO.Response = _request.Response;
+Ionic.IO.APIRequest = _request.APIRequest;
+Ionic.IO.APIResponse = _request.APIResponse;
+Ionic.IO.Storage = _storage.Storage;
+Ionic.IO.Settings = _settings.Settings;
+
+// Provider a single storage for services that have previously been registered
+var serviceStorage = {};
+
+Ionic.io = function () {
+  if (typeof Ionic.IO.main === 'undefined') {
+    Ionic.IO.main = new Ionic.IO.Core();
+  }
+  return Ionic.IO.main;
+};
+
+Ionic.getService = function (name) {
+  if (typeof serviceStorage[name] === 'undefined' || !serviceStorage[name]) {
+    return false;
+  }
+  return serviceStorage[name];
+};
+
+Ionic.addService = function (name, service, force) {
+  if (service && typeof serviceStorage[name] === 'undefined') {
+    serviceStorage[name] = service;
+  } else if (service && force) {
+    serviceStorage[name] = service;
+  }
+};
+
+Ionic.removeService = function (name) {
+  if (typeof serviceStorage[name] !== 'undefined') {
+    delete serviceStorage[name];
+  }
+};
+
+},{"./app":6,"./core":7,"./events":9,"./logger":10,"./promise":11,"./request":12,"./settings":13,"./storage":14,"./user":15}],9:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var _EventEmitter = require("events");
+
+var EventEmitter = (function () {
+  function EventEmitter() {
+    _classCallCheck(this, EventEmitter);
+
+    this._emitter = new _EventEmitter();
+  }
+
+  _createClass(EventEmitter, [{
+    key: "on",
+    value: function on(event, callback) {
+      return this._emitter.on(event, callback);
+    }
+  }, {
+    key: "emit",
+    value: function emit(label, data) {
+      return this._emitter.emit(label, data);
+    }
+  }]);
+
+  return EventEmitter;
+})();
+
+exports.EventEmitter = EventEmitter;
+
+},{"events":2}],10:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var Logger = (function () {
+  function Logger(opts) {
+    _classCallCheck(this, Logger);
+
+    var options = opts || {};
+    this._silence = false;
+    this._prefix = false;
+    this._options = options;
+    this._bootstrap();
+  }
+
+  _createClass(Logger, [{
+    key: "_bootstrap",
+    value: function _bootstrap() {
+      if (this._options.prefix) {
+        this._prefix = this._options.prefix;
+      }
+    }
+  }, {
+    key: "info",
+    value: function info(data) {
+      if (!this._silence) {
+        if (this._prefix) {
+          console.log(this._prefix, data);
+        } else {
+          console.log(data);
         }
       }
-    }]);
+    }
+  }, {
+    key: "error",
+    value: function error(data) {
+      if (this._prefix) {
+        console.error(this._prefix, data);
+      } else {
+        console.error(data);
+      }
+    }
+  }]);
 
-    return DeferredPromise;
-  })();
-
-  Ionic.namespace('IO', 'Promise', ES6Promise);
-  Ionic.namespace('IO', 'DeferredPromise', DeferredPromise);
+  return Logger;
 })();
+
+exports.Logger = Logger;
+
+},{}],11:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var ES6Promise = require("es6-promise").Promise;
+
+var Promise = ES6Promise;
+
+exports.Promise = Promise;
+
+var DeferredPromise = (function () {
+  function DeferredPromise() {
+    _classCallCheck(this, DeferredPromise);
+
+    var self = this;
+    this._update = false;
+    this.promise = new ES6Promise(function (resolve, reject) {
+      self.resolve = resolve;
+      self.reject = reject;
+    });
+    var originalThen = this.promise.then;
+    this.promise.then = function (ok, fail, update) {
+      self._update = update;
+      return originalThen.call(self.promise, ok, fail);
+    };
+  }
+
+  _createClass(DeferredPromise, [{
+    key: "notify",
+    value: function notify(value) {
+      if (this._update && typeof this._update === 'function') {
+        this._update(value);
+      }
+    }
+  }]);
+
+  return DeferredPromise;
+})();
+
+exports.DeferredPromise = DeferredPromise;
 
 },{"es6-promise":4}],12:[function(require,module,exports){
 "use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
 
 var _get = function get(_x, _x2, _x3) { var _again = true; _function: while (_again) { var object = _x, property = _x2, receiver = _x3; desc = parent = getter = undefined; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x = parent; _x2 = property; _x3 = receiver; _again = true; continue _function; } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
 
@@ -2394,781 +2431,807 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-(function () {
+var _promise = require("./promise");
 
-  var request = require("browser-request");
+var request = require("browser-request");
 
-  var Request = function Request() {
-    _classCallCheck(this, Request);
-  };
+var Request = function Request() {
+  _classCallCheck(this, Request);
+};
 
-  var Response = function Response() {
-    _classCallCheck(this, Response);
-  };
+exports.Request = Request;
 
-  var APIResponse = (function (_Response) {
-    _inherits(APIResponse, _Response);
+var Response = function Response() {
+  _classCallCheck(this, Response);
+};
 
-    function APIResponse() {
-      _classCallCheck(this, APIResponse);
+exports.Response = Response;
 
-      _get(Object.getPrototypeOf(APIResponse.prototype), "constructor", this).call(this);
-    }
+var APIResponse = (function (_Response) {
+  _inherits(APIResponse, _Response);
 
-    return APIResponse;
-  })(Response);
+  function APIResponse() {
+    _classCallCheck(this, APIResponse);
 
-  var APIRequest = (function (_Request) {
-    _inherits(APIRequest, _Request);
+    _get(Object.getPrototypeOf(APIResponse.prototype), "constructor", this).call(this);
+  }
 
-    function APIRequest(options) {
-      _classCallCheck(this, APIRequest);
+  return APIResponse;
+})(Response);
 
-      _get(Object.getPrototypeOf(APIRequest.prototype), "constructor", this).call(this);
-      var requestInfo = {};
-      var p = new Ionic.IO.Promise(function (resolve, reject) {
-        request(options, function (err, response, result) {
-          requestInfo._lastError = err;
-          requestInfo._lastResponse = response;
-          requestInfo._lastResult = result;
-          if (err) {
-            reject(err);
+exports.APIResponse = APIResponse;
+
+var APIRequest = (function (_Request) {
+  _inherits(APIRequest, _Request);
+
+  function APIRequest(options) {
+    _classCallCheck(this, APIRequest);
+
+    _get(Object.getPrototypeOf(APIRequest.prototype), "constructor", this).call(this);
+    var requestInfo = {};
+    var p = new _promise.Promise(function (resolve, reject) {
+      request(options, function (err, response, result) {
+        requestInfo._lastError = err;
+        requestInfo._lastResponse = response;
+        requestInfo._lastResult = result;
+        if (err) {
+          reject(err);
+        } else {
+          if (response.statusCode < 200 || response.statusCode >= 400) {
+            var _err = new Error("Request Failed with status code of " + response.statusCode);
+            reject(_err);
           } else {
-            if (response.statusCode < 200 || response.statusCode >= 400) {
-              var _err = new Error("Request Failed with status code of " + response.statusCode);
-              reject(_err);
-            } else {
-              resolve({ 'response': response, 'payload': result });
-            }
+            resolve({ 'response': response, 'payload': result });
           }
-        });
+        }
       });
-      p.requestInfo = requestInfo;
-      return p;
-    }
+    });
+    p.requestInfo = requestInfo;
+    return p;
+  }
 
-    return APIRequest;
-  })(Request);
+  return APIRequest;
+})(Request);
 
-  Ionic.namespace('IO', 'Request', Request);
-  Ionic.namespace('IO', 'Response', Response);
-  Ionic.namespace('IO', 'ApiRequest', APIRequest);
-  Ionic.namespace('IO', 'ApiResponse', APIResponse);
-})();
+exports.APIRequest = APIRequest;
 
-},{"browser-request":1}],13:[function(require,module,exports){
+},{"./promise":11,"browser-request":1}],13:[function(require,module,exports){
 'use strict';
+
+Object.defineProperty(exports, '__esModule', {
+  value: true
+});
 
 var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
-(function () {
-  var Settings = (function () {
-    function Settings() {
-      _classCallCheck(this, Settings);
+var BaseSettings = (function () {
+  function BaseSettings() {
+    _classCallCheck(this, BaseSettings);
 
-      this._settings = null;
+    this._settings = null;
+    return this;
+  }
+
+  _createClass(BaseSettings, [{
+    key: 'factory',
+    value: function factory(name, func) {
+      this._settings = func();
       return this;
     }
+  }, {
+    key: 'get',
+    value: function get(name) {
+      return this._settings.get(name);
+    }
+  }, {
+    key: 'finish',
+    value: function finish() {
+      return this;
+    }
+  }]);
 
-    _createClass(Settings, [{
-      key: 'factory',
-      value: function factory(name, func) {
-        this._settings = func();
-        return this;
+  return BaseSettings;
+})();
+
+var temp = new BaseSettings()
+
+// Auto-generated configuration factory
+.factory('$ionicCoreSettings', function () {
+  var settings = {};
+  return {
+    "get": function get(setting) {
+      if (settings[setting]) {
+        return settings[setting];
       }
-    }, {
-      key: 'get',
-      value: function get(name) {
-        return this._settings.get(name);
-      }
-    }, {
-      key: 'finish',
-      value: function finish() {
-        return this;
-      }
-    }]);
+      return null;
+    }
+  };
+})
+// Auto-generated configuration factory
 
-    return Settings;
-  })();
+.finish();
 
-  var temp = new Settings()
+var Settings = (function () {
+  function Settings() {
+    _classCallCheck(this, Settings);
 
-  // Auto-generated configuration factory
-  .factory('$ionicCoreSettings', function () {
-    var settings = {};
-    return {
-      "get": function get(setting) {
-        if (settings[setting]) {
-          return settings[setting];
-        }
+    this._locations = {
+      'api': 'https://apps.ionic.io',
+      'push': 'https://push.ionic.io',
+      'analytics': 'https://analytics.ionic.io'
+    };
+    this._devLocations = this.get('dev_locations');
+    if (!this._devLocations) {
+      this._devLocations = {};
+    }
+  }
+
+  _createClass(Settings, [{
+    key: 'get',
+    value: function get(name) {
+      return temp.get(name);
+    }
+  }, {
+    key: 'getURL',
+    value: function getURL(name) {
+      if (this._devLocations[name]) {
+        return this._devLocations[name];
+      } else if (this._locations[name]) {
+        return this._locations[name];
+      } else {
         return null;
       }
-    };
-  })
-  // Auto-generated configuration factory
-
-  .finish();
-
-  var CoreSettings = (function () {
-    function CoreSettings() {
-      _classCallCheck(this, CoreSettings);
-
-      this._locations = {
-        'api': 'https://apps.ionic.io',
-        'push': 'https://push.ionic.io',
-        'analytics': 'https://analytics.ionic.io'
-      };
-      this._devLocations = this.get('dev_locations');
-      if (!this._devLocations) {
-        this._devLocations = {};
-      }
     }
+  }]);
 
-    _createClass(CoreSettings, [{
-      key: 'get',
-      value: function get(name) {
-        return temp.get(name);
-      }
-    }, {
-      key: 'getURL',
-      value: function getURL(name) {
-        if (this._devLocations[name]) {
-          return this._devLocations[name];
-        } else if (this._locations[name]) {
-          return this._locations[name];
-        } else {
-          return null;
-        }
-      }
-    }]);
-
-    return CoreSettings;
-  })();
-
-  Ionic.namespace('IO', 'Settings', CoreSettings);
+  return Settings;
 })();
+
+exports.Settings = Settings;
 
 },{}],14:[function(require,module,exports){
 'use strict';
 
+Object.defineProperty(exports, '__esModule', {
+  value: true
+});
+
 var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
-(function () {
-  var PlatformLocalStorageStrategy = (function () {
-    function PlatformLocalStorageStrategy() {
-      _classCallCheck(this, PlatformLocalStorageStrategy);
+var _promise = require("./promise");
+
+var PlatformLocalStorageStrategy = (function () {
+  function PlatformLocalStorageStrategy() {
+    _classCallCheck(this, PlatformLocalStorageStrategy);
+  }
+
+  _createClass(PlatformLocalStorageStrategy, [{
+    key: 'get',
+    value: function get(key) {
+      return window.localStorage.getItem(key);
     }
-
-    _createClass(PlatformLocalStorageStrategy, [{
-      key: 'get',
-      value: function get(key) {
-        return window.localStorage.getItem(key);
-      }
-    }, {
-      key: 'remove',
-      value: function remove(key) {
-        return window.localStorage.removeItem(key);
-      }
-    }, {
-      key: 'set',
-      value: function set(key, value) {
-        return window.localStorage.setItem(key, value);
-      }
-    }]);
-
-    return PlatformLocalStorageStrategy;
-  })();
-
-  var objectCache = {};
-  var memoryLocks = {};
-  var DeferredPromise = Ionic.IO.DeferredPromise;
-
-  var PlatformLocalStorage = (function () {
-    function PlatformLocalStorage() {
-      _classCallCheck(this, PlatformLocalStorage);
-
-      this.strategy = new PlatformLocalStorageStrategy();
+  }, {
+    key: 'remove',
+    value: function remove(key) {
+      return window.localStorage.removeItem(key);
     }
+  }, {
+    key: 'set',
+    value: function set(key, value) {
+      return window.localStorage.setItem(key, value);
+    }
+  }]);
 
-    /**
-     * Stores an object in local storage under the given key
-     * @param {string} key Name of the key to store values in
-     * @param {object} object The object to store with the key
-     * @return {void}
-     */
-
-    _createClass(PlatformLocalStorage, [{
-      key: 'storeObject',
-      value: function storeObject(key, object) {
-        // Convert object to JSON and store in localStorage
-        var json = JSON.stringify(object);
-        this.strategy.set(key, json);
-
-        // Then store it in the object cache
-        objectCache[key] = object;
-      }
-
-      /**
-       * Either retrieves the cached copy of an object,
-       * or the object itself from localStorage.
-       * @param {string} key The name of the key to pull from
-       * @return {mixed} Returns the previously stored Object or null
-       */
-    }, {
-      key: 'retrieveObject',
-      value: function retrieveObject(key) {
-        // First check to see if it's the object cache
-        var cached = objectCache[key];
-        if (cached) {
-          return cached;
-        }
-
-        // Deserialize the object from JSON
-        var json = this.strategy.get(key);
-
-        // null or undefined --> return null.
-        if (json == null) {
-          return null;
-        }
-
-        try {
-          return JSON.parse(json);
-        } catch (err) {
-          return null;
-        }
-      }
-
-      /**
-       * Locks the async call represented by the given promise and lock key.
-       * Only one asyncFunction given by the lockKey can be running at any time.
-       *
-       * @param {string} lockKey should be a string representing the name of this async call.
-       *        This is required for persistence.
-       * @param {function} asyncFunction Returns a promise of the async call.
-       * @returns {Promise} A new promise, identical to the one returned by asyncFunction,
-       *          but with two new errors: 'in_progress', and 'last_call_interrupted'.
-       */
-    }, {
-      key: 'lockedAsyncCall',
-      value: function lockedAsyncCall(lockKey, asyncFunction) {
-
-        var self = this;
-        var deferred = new DeferredPromise();
-
-        // If the memory lock is set, error out.
-        if (memoryLocks[lockKey]) {
-          deferred.reject('in_progress');
-          return deferred.promise;
-        }
-
-        // If there is a stored lock but no memory lock, flag a persistence error
-        if (this.strategy.get(lockKey) === 'locked') {
-          deferred.reject('last_call_interrupted');
-          deferred.promise.then(null, function () {
-            self.strategy.remove(lockKey);
-          });
-          return deferred.promise;
-        }
-
-        // Set stored and memory locks
-        memoryLocks[lockKey] = true;
-        self.strategy.set(lockKey, 'locked');
-
-        // Perform the async operation
-        asyncFunction().then(function (successData) {
-          deferred.resolve(successData);
-
-          // Remove stored and memory locks
-          delete memoryLocks[lockKey];
-          self.strategy.remove(lockKey);
-        }, function (errorData) {
-          deferred.reject(errorData);
-
-          // Remove stored and memory locks
-          delete memoryLocks[lockKey];
-          self.strategy.remove(lockKey);
-        }, function (notifyData) {
-          deferred.notify(notifyData);
-        });
-
-        return deferred.promise;
-      }
-    }]);
-
-    return PlatformLocalStorage;
-  })();
-
-  Ionic.namespace('IO', 'Storage', PlatformLocalStorage);
+  return PlatformLocalStorageStrategy;
 })();
 
-},{}],15:[function(require,module,exports){
-'use strict';
+var objectCache = {};
+var memoryLocks = {};
 
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+var Storage = (function () {
+  function Storage() {
+    _classCallCheck(this, Storage);
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
+    this.strategy = new PlatformLocalStorageStrategy();
+  }
 
-(function () {
+  /**
+   * Stores an object in local storage under the given key
+   * @param {string} key Name of the key to store values in
+   * @param {object} object The object to store with the key
+   * @return {void}
+   */
 
-  var ApiRequest = Ionic.IO.ApiRequest;
-  var DeferredPromise = Ionic.IO.DeferredPromise;
-  var Settings = new Ionic.IO.Settings();
-  var Core = Ionic.IO.Core;
-  var Storage = Ionic.IO.Core.getStorage();
+  _createClass(Storage, [{
+    key: 'storeObject',
+    value: function storeObject(key, object) {
+      // Convert object to JSON and store in localStorage
+      var json = JSON.stringify(object);
+      this.strategy.set(key, json);
 
-  var AppUserContext = null;
-
-  var userAPIBase = Settings.getURL('api') + '/api/v1/app/' + Settings.get('app_id') + '/users';
-  var userAPIEndpoints = {
-    'load': function load(userModel) {
-      return userAPIBase + '/' + userModel.id;
-    },
-    'remove': function remove(userModel) {
-      return userAPIBase + '/' + userModel.id;
-    },
-    'save': function save() {
-      return userAPIBase + '/identify';
-    },
-    'addToken': function addToken() {
-      return userAPIBase + '/pushUnique';
-    }
-  };
-
-  var UserContext = (function () {
-    function UserContext() {
-      _classCallCheck(this, UserContext);
+      // Then store it in the object cache
+      objectCache[key] = object;
     }
 
-    _createClass(UserContext, null, [{
-      key: 'store',
-      value: function store() {
-        Storage.storeObject(UserContext.label, Ionic.User.active);
+    /**
+     * Either retrieves the cached copy of an object,
+     * or the object itself from localStorage.
+     * @param {string} key The name of the key to pull from
+     * @return {mixed} Returns the previously stored Object or null
+     */
+  }, {
+    key: 'retrieveObject',
+    value: function retrieveObject(key) {
+      // First check to see if it's the object cache
+      var cached = objectCache[key];
+      if (cached) {
+        return cached;
       }
-    }, {
-      key: 'load',
-      value: function load() {
-        var data = Storage.retrieveObject(UserContext.label) || false;
-        if (data) {
-          return Ionic.User.fromContext(data);
-        }
+
+      // Deserialize the object from JSON
+      var json = this.strategy.get(key);
+
+      // null or undefined --> return null.
+      if (json == null) {
+        return null;
+      }
+
+      try {
+        return JSON.parse(json);
+      } catch (err) {
+        return null;
+      }
+    }
+
+    /**
+     * Locks the async call represented by the given promise and lock key.
+     * Only one asyncFunction given by the lockKey can be running at any time.
+     *
+     * @param {string} lockKey should be a string representing the name of this async call.
+     *        This is required for persistence.
+     * @param {function} asyncFunction Returns a promise of the async call.
+     * @returns {Promise} A new promise, identical to the one returned by asyncFunction,
+     *          but with two new errors: 'in_progress', and 'last_call_interrupted'.
+     */
+  }, {
+    key: 'lockedAsyncCall',
+    value: function lockedAsyncCall(lockKey, asyncFunction) {
+
+      var self = this;
+      var deferred = new _promise.DeferredPromise();
+
+      // If the memory lock is set, error out.
+      if (memoryLocks[lockKey]) {
+        deferred.reject('in_progress');
+        return deferred.promise;
+      }
+
+      // If there is a stored lock but no memory lock, flag a persistence error
+      if (this.strategy.get(lockKey) === 'locked') {
+        deferred.reject('last_call_interrupted');
+        deferred.promise.then(null, function () {
+          self.strategy.remove(lockKey);
+        });
+        return deferred.promise;
+      }
+
+      // Set stored and memory locks
+      memoryLocks[lockKey] = true;
+      self.strategy.set(lockKey, 'locked');
+
+      // Perform the async operation
+      asyncFunction().then(function (successData) {
+        deferred.resolve(successData);
+
+        // Remove stored and memory locks
+        delete memoryLocks[lockKey];
+        self.strategy.remove(lockKey);
+      }, function (errorData) {
+        deferred.reject(errorData);
+
+        // Remove stored and memory locks
+        delete memoryLocks[lockKey];
+        self.strategy.remove(lockKey);
+      }, function (notifyData) {
+        deferred.notify(notifyData);
+      });
+
+      return deferred.promise;
+    }
+  }]);
+
+  return Storage;
+})();
+
+exports.Storage = Storage;
+
+},{"./promise":11}],15:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var _request = require("./request");
+
+var _promise = require("./promise");
+
+var _settings = require("./settings");
+
+var _core = require("./core");
+
+var _storage = require("./storage");
+
+var _logger = require("./logger");
+
+var Core = _core.IonicPlatform;
+var AppUserContext = null;
+var settings = new _settings.Settings();
+var storage = new _storage.Storage();
+
+var userAPIBase = settings.getURL('api') + '/api/v1/app/' + settings.get('app_id') + '/users';
+var userAPIEndpoints = {
+  'load': function load(userModel) {
+    return userAPIBase + '/' + userModel.id;
+  },
+  'remove': function remove(userModel) {
+    return userAPIBase + '/' + userModel.id;
+  },
+  'save': function save() {
+    return userAPIBase + '/identify';
+  },
+  'addToken': function addToken() {
+    return userAPIBase + '/pushUnique';
+  }
+};
+
+var UserContext = (function () {
+  function UserContext() {
+    _classCallCheck(this, UserContext);
+  }
+
+  _createClass(UserContext, null, [{
+    key: "store",
+    value: function store() {
+      storage.storeObject(UserContext.label, User.current());
+    }
+  }, {
+    key: "load",
+    value: function load() {
+      var data = storage.retrieveObject(UserContext.label) || false;
+      if (data) {
+        return User.fromContext(data);
+      }
+      return false;
+    }
+  }, {
+    key: "label",
+    get: function get() {
+      return "ionic_io_user_" + settings.get('app_id');
+    }
+  }]);
+
+  return UserContext;
+})();
+
+var PushData = (function () {
+
+  /**
+   * Push Data Object
+   *
+   * Holds push data to use in conjunction with Ionic User models.
+   * @constructor
+   * @param {object} tokens Formatted token data
+   */
+
+  function PushData(tokens) {
+    _classCallCheck(this, PushData);
+
+    this.logger = new _logger.Logger({
+      'prefix': 'Ionic Push Token:'
+    });
+    this.tokens = {
+      'android': [],
+      'ios': []
+    };
+    if (tokens && typeof tokens === 'object') {
+      this.tokens = tokens;
+    }
+  }
+
+  /**
+   * Add a new token to the current list of tokens
+   * Duplicates are not added, but still return as succesfully added.
+   *
+   * @param {ionic.io.push.Token} token Push Token
+   * @return {boolean} False on error, otherwise true
+   */
+
+  _createClass(PushData, [{
+    key: "addToken",
+    value: function addToken(token) {
+      var platform = null;
+
+      if (typeof token === 'undefined' || !token || token === '') {
+        this.logger.info('you need to pass a valid token to addToken()');
         return false;
       }
-    }, {
-      key: 'label',
-      get: function get() {
-        return "ionic_io_user_" + Settings.get('app_id');
+
+      if (token.token) {
+        token = token.token;
       }
-    }]);
 
-    return UserContext;
-  })();
-
-  var PushData = (function () {
-
-    /**
-     * Push Data Object
-     *
-     * Holds push data to use in conjunction with Ionic User models.
-     * @constructor
-     * @param {object} tokens Formatted token data
-     */
-
-    function PushData(tokens) {
-      _classCallCheck(this, PushData);
-
-      this.logger = new Ionic.IO.Logger({
-        'prefix': 'Ionic Push Token:'
-      });
-      this.tokens = {
-        'android': [],
-        'ios': []
-      };
-      if (tokens && typeof tokens === 'object') {
-        this.tokens = tokens;
+      if (Core.isAndroidDevice()) {
+        platform = 'android';
+      } else if (Core.isIOSDevice()) {
+        platform = 'ios';
       }
+
+      if (platform === null || !this.tokens.hasOwnProperty(platform)) {
+        this.logger.info('cannot determine the token platform. Are you running on an Android or iOS device?');
+        return false;
+      }
+
+      var platformTokens = this.tokens[platform];
+      var hasToken = false;
+      var testToken = null;
+
+      for (testToken in platformTokens) {
+        if (platformTokens[testToken] === token) {
+          hasToken = true;
+        }
+      }
+      if (!hasToken) {
+        platformTokens.push(token);
+      }
+
+      return true;
     }
 
     /**
-     * Add a new token to the current list of tokens
-     * Duplicates are not added, but still return as succesfully added.
+     * Remove the specified token if it exists in any platform token listing
+     * If it does not exist, nothing is removed, but we will still return success
      *
      * @param {ionic.io.push.Token} token Push Token
-     * @return {boolean} False on error, otherwise true
+     * @return {boolean} true
      */
-
-    _createClass(PushData, [{
-      key: 'addToken',
-      value: function addToken(token) {
-        var platform = null;
-
-        if (typeof token === 'undefined' || !token || token === '') {
-          this.logger.info('you need to pass a valid token to addToken()');
-          return false;
-        }
-
-        if (token.token) {
-          token = token.token;
-        }
-
-        if (Core.isAndroidDevice()) {
-          platform = 'android';
-        } else if (Core.isIOSDevice()) {
-          platform = 'ios';
-        }
-
-        if (platform === null || !this.tokens.hasOwnProperty(platform)) {
-          this.logger.info('cannot determine the token platform. Are you running on an Android or iOS device?');
-          return false;
-        }
-
-        var platformTokens = this.tokens[platform];
-        var hasToken = false;
-        var testToken = null;
-
-        for (testToken in platformTokens) {
-          if (platformTokens[testToken] === token) {
-            hasToken = true;
+  }, {
+    key: "removeToken",
+    value: function removeToken(token) {
+      var x;
+      for (x in this.tokens) {
+        var platform = this.tokens[x];
+        var testToken;
+        for (testToken in platform) {
+          if (platform[testToken] === token) {
+            platform.splice(testToken, 1);
           }
         }
-        if (!hasToken) {
-          platformTokens.push(token);
-        }
-
-        return true;
       }
-
-      /**
-       * Remove the specified token if it exists in any platform token listing
-       * If it does not exist, nothing is removed, but we will still return success
-       *
-       * @param {ionic.io.push.Token} token Push Token
-       * @return {boolean} False on error, otherwise true
-       */
-    }, {
-      key: 'removeToken',
-      value: function removeToken(token) {
-        token;
-        // todo
-      }
-    }]);
-
-    return PushData;
-  })();
-
-  var UserData = (function () {
-    function UserData(data) {
-      _classCallCheck(this, UserData);
-
-      this.data = {};
-      if (typeof data === 'object') {
-        this.data = data;
-      }
+      return true;
     }
+  }]);
 
-    _createClass(UserData, [{
-      key: 'set',
-      value: function set(key, value) {
-        this.data[key] = value;
-      }
-    }, {
-      key: 'unset',
-      value: function unset(key) {
-        delete this.data[key];
-      }
-    }, {
-      key: 'get',
-      value: function get(key, defaultValue) {
-        if (this.data.hasOwnProperty(key)) {
-          return this.data[key];
-        } else {
-          return defaultValue || null;
-        }
-      }
-    }, {
-      key: 'toString',
-      value: function toString() {
-        return JSON.stringify(this.data);
-      }
-    }]);
-
-    return UserData;
-  })();
-
-  var User = (function () {
-    function User() {
-      _classCallCheck(this, User);
-
-      this.logger = new Ionic.IO.Logger({
-        'prefix': 'Ionic User:'
-      });
-      this._blockLoad = false;
-      this._blockSave = false;
-      this._blockDelete = false;
-      this._dirty = false;
-      this._fresh = true;
-      this.push = new PushData();
-      this.data = new UserData();
-    }
-
-    _createClass(User, [{
-      key: 'isDirty',
-      value: function isDirty() {
-        return this._dirty;
-      }
-    }, {
-      key: 'current',
-      value: function current(user) {
-        if (user) {
-          AppUserContext = user;
-          UserContext.store();
-          return AppUserContext;
-        } else {
-          if (!AppUserContext) {
-            AppUserContext = UserContext.load();
-          }
-          return AppUserContext || new Ionic.User();
-        }
-      }
-    }, {
-      key: 'isFresh',
-      value: function isFresh() {
-        return this._fresh;
-      }
-    }, {
-      key: 'getAPIFormat',
-      value: function getAPIFormat() {
-        var data = this.data.data;
-        data.user_id = this.id; // eslint-disable-line camelcase
-        data._push = {
-          'android_tokens': this.push.tokens.android,
-          'ios_tokens': this.push.tokens.ios
-        };
-        return data;
-      }
-    }, {
-      key: 'getFormat',
-      value: function getFormat(format) {
-        var self = this;
-        var formatted = null;
-        switch (format) {
-          case 'api':
-            formatted = self.getAPIFormat();
-            break;
-        }
-        return formatted;
-      }
-    }, {
-      key: 'delete',
-      value: function _delete() {
-        var self = this;
-        var deferred = new DeferredPromise();
-
-        if (!self.valid) {
-          return false;
-        }
-
-        if (!self._blockDelete) {
-          self._blockDelete = true;
-          new ApiRequest({
-            'uri': userAPIEndpoints.remove(this),
-            'method': 'DELETE',
-            'headers': {
-              'Accept': 'application/json',
-              'Content-Type': 'application/json'
-            }
-          }).then(function (result) {
-            self._blockDelete = false;
-            self.logger.info('deleted ' + self);
-            deferred.resolve(result);
-          }, function (error) {
-            self._blockDelete = false;
-            self.logger.error(error);
-            deferred.reject(error);
-          });
-        } else {
-          self.logger.info("a delete operation is already in progress for " + this + ".");
-          deferred.reject(false);
-        }
-
-        return deferred.promise;
-      }
-    }, {
-      key: '_store',
-      value: function _store() {
-        if (this === Ionic.User.active) {
-          UserContext.store();
-        }
-      }
-    }, {
-      key: 'save',
-      value: function save() {
-        var self = this;
-        var deferred = new DeferredPromise();
-
-        if (!self._blockSave) {
-          self._blockSave = true;
-          new ApiRequest({
-            'uri': userAPIEndpoints.save(this),
-            'method': 'POST',
-            'headers': {
-              'Accept': 'application/json',
-              'Content-Type': 'application/json'
-            },
-            'body': JSON.stringify(self.getFormat('api'))
-          }).then(function (result) {
-            self._dirty = false;
-            self._fresh = false;
-            self.logger.info('saved user');
-            deferred.resolve(result);
-          }, function (error) {
-            self._dirty = true;
-            self.logger.error(error);
-            deferred.reject(error);
-          }).then(function () {
-            self._blockSave = false;
-            self._store();
-          });
-        } else {
-          self.logger.info("a save operation is already in progress for " + this + ".");
-          deferred.reject(false);
-        }
-
-        return deferred.promise;
-      }
-    }, {
-      key: 'toString',
-      value: function toString() {
-        return '<IonicUser [\'' + this.id + '\']>';
-      }
-    }, {
-      key: 'addPushToken',
-      value: function addPushToken(token) {
-        return this.push.addToken(token);
-      }
-    }, {
-      key: 'removePushToken',
-      value: function removePushToken(token) {
-        if (!(token instanceof Ionic.PushToken)) {
-          token = new Ionic.PushToken(token);
-        }
-        return this.push.removeToken(token);
-      }
-    }, {
-      key: 'set',
-      value: function set(key, value) {
-        return this.data.set(key, value);
-      }
-    }, {
-      key: 'get',
-      value: function get(key, defaultValue) {
-        return this.data.get(key, defaultValue);
-      }
-    }, {
-      key: 'remove',
-      value: function remove(key) {
-        return this.data.unset(key);
-      }
-    }, {
-      key: 'valid',
-      get: function get() {
-        if (this.id) {
-          return true;
-        }
-        return false;
-      }
-    }, {
-      key: 'id',
-      set: function set(v) {
-        if (v && typeof v === 'string' && v !== '') {
-          this._id = v;
-          return true;
-        } else {
-          return false;
-        }
-      },
-      get: function get() {
-        return this._id || null;
-      }
-    }], [{
-      key: 'fromContext',
-      value: function fromContext(data) {
-        var user = new Ionic.User();
-        user.id = data._id;
-        user.data = new UserData(data.data);
-        user.push = new PushData(data.push.tokens);
-        user._fresh = data._fresh;
-        user._dirty = data._dirty;
-        return user;
-      }
-    }, {
-      key: 'load',
-      value: function load(id) {
-        var deferred = new DeferredPromise();
-
-        var tempUser = new Ionic.User();
-        tempUser.id = id;
-
-        if (!tempUser._blockLoad) {
-          tempUser._blockLoad = true;
-          new ApiRequest({
-            'uri': userAPIEndpoints.load(tempUser),
-            'method': 'GET',
-            'json': true,
-            'headers': {
-              'Accept': 'application/json',
-              'Content-Type': 'application/json'
-            }
-          }).then(function (result) {
-            tempUser._blockLoad = false;
-            tempUser.logger.info('loaded user');
-
-            // set the custom data
-            tempUser.data = new UserData(result.payload.custom_data);
-
-            // set the push tokens
-            if (result.payload._push && result.payload._push.android_tokens) {
-              tempUser.push.tokens.android = result.payload._push.android_tokens;
-            }
-            if (result.payload._push && result.payload._push.ios_tokens) {
-              tempUser.push.tokens.ios = result.payload._push.ios_tokens;
-            }
-
-            tempUser.image = result.payload.image;
-            tempUser._fresh = false;
-
-            deferred.resolve(tempUser);
-          }, function (error) {
-            tempUser._blockLoad = false;
-            tempUser.logger.error(error);
-            deferred.reject(error);
-          });
-        } else {
-          tempUser.logger.info("a load operation is already in progress for " + this + ".");
-          deferred.reject(false);
-        }
-
-        return deferred.promise;
-      }
-    }, {
-      key: 'anonymousId',
-      value: function anonymousId() {
-        // this is not guaranteed to be unique
-        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-          var r = Math.random() * 16 | 0,
-              v = c == 'x' ? r : r & 0x3 | 0x8; //eslint-disable-line
-          return v.toString(16);
-        });
-      }
-    }]);
-
-    return User;
-  })();
-
-  Ionic.namespace('Ionic', 'User', User, window);
+  return PushData;
 })();
 
-},{}]},{},[9,11,12,8,10,14,13,7,15,6,5]);
+var UserData = (function () {
+  function UserData(data) {
+    _classCallCheck(this, UserData);
+
+    this.data = {};
+    if (typeof data === 'object') {
+      this.data = data;
+    }
+  }
+
+  _createClass(UserData, [{
+    key: "set",
+    value: function set(key, value) {
+      this.data[key] = value;
+    }
+  }, {
+    key: "unset",
+    value: function unset(key) {
+      delete this.data[key];
+    }
+  }, {
+    key: "get",
+    value: function get(key, defaultValue) {
+      if (this.data.hasOwnProperty(key)) {
+        return this.data[key];
+      } else {
+        return defaultValue || null;
+      }
+    }
+  }, {
+    key: "toString",
+    value: function toString() {
+      return JSON.stringify(this.data);
+    }
+  }]);
+
+  return UserData;
+})();
+
+var User = (function () {
+  function User() {
+    _classCallCheck(this, User);
+
+    this.logger = new _logger.Logger({
+      'prefix': 'Ionic User:'
+    });
+    this._blockLoad = false;
+    this._blockSave = false;
+    this._blockDelete = false;
+    this._dirty = false;
+    this._fresh = true;
+    this.push = new PushData();
+    this.data = new UserData();
+  }
+
+  _createClass(User, [{
+    key: "isDirty",
+    value: function isDirty() {
+      return this._dirty;
+    }
+  }, {
+    key: "isFresh",
+    value: function isFresh() {
+      return this._fresh;
+    }
+  }, {
+    key: "getAPIFormat",
+    value: function getAPIFormat() {
+      var data = this.data.data;
+      data.user_id = this.id; // eslint-disable-line camelcase
+      data._push = {
+        'android_tokens': this.push.tokens.android,
+        'ios_tokens': this.push.tokens.ios
+      };
+      return data;
+    }
+  }, {
+    key: "getFormat",
+    value: function getFormat(format) {
+      var self = this;
+      var formatted = null;
+      switch (format) {
+        case 'api':
+          formatted = self.getAPIFormat();
+          break;
+      }
+      return formatted;
+    }
+  }, {
+    key: "delete",
+    value: function _delete() {
+      var self = this;
+      var deferred = new _promise.DeferredPromise();
+
+      if (!self.valid) {
+        return false;
+      }
+
+      if (!self._blockDelete) {
+        self._blockDelete = true;
+        new _request.APIRequest({
+          'uri': userAPIEndpoints.remove(this),
+          'method': 'DELETE',
+          'headers': {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        }).then(function (result) {
+          self._blockDelete = false;
+          self.logger.info('deleted ' + self);
+          deferred.resolve(result);
+        }, function (error) {
+          self._blockDelete = false;
+          self.logger.error(error);
+          deferred.reject(error);
+        });
+      } else {
+        self.logger.info("a delete operation is already in progress for " + this + ".");
+        deferred.reject(false);
+      }
+
+      return deferred.promise;
+    }
+  }, {
+    key: "_store",
+    value: function _store() {
+      if (this === User.current()) {
+        UserContext.store();
+      }
+    }
+  }, {
+    key: "save",
+    value: function save() {
+      var self = this;
+      var deferred = new _promise.DeferredPromise();
+
+      if (!self._blockSave) {
+        self._blockSave = true;
+        new _request.APIRequest({
+          'uri': userAPIEndpoints.save(this),
+          'method': 'POST',
+          'headers': {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          'body': JSON.stringify(self.getFormat('api'))
+        }).then(function (result) {
+          self._dirty = false;
+          self._fresh = false;
+          self.logger.info('saved user');
+          deferred.resolve(result);
+        }, function (error) {
+          self._dirty = true;
+          self.logger.error(error);
+          deferred.reject(error);
+        }).then(function () {
+          self._blockSave = false;
+          self._store();
+        });
+      } else {
+        self.logger.info("a save operation is already in progress for " + this + ".");
+        deferred.reject(false);
+      }
+
+      return deferred.promise;
+    }
+  }, {
+    key: "toString",
+    value: function toString() {
+      return '<IonicUser [\'' + this.id + '\']>';
+    }
+  }, {
+    key: "addPushToken",
+    value: function addPushToken(token) {
+      return this.push.addToken(token);
+    }
+  }, {
+    key: "removePushToken",
+    value: function removePushToken(token) {
+      return this.push.removeToken(token);
+    }
+  }, {
+    key: "set",
+    value: function set(key, value) {
+      return this.data.set(key, value);
+    }
+  }, {
+    key: "get",
+    value: function get(key, defaultValue) {
+      return this.data.get(key, defaultValue);
+    }
+  }, {
+    key: "remove",
+    value: function remove(key) {
+      return this.data.unset(key);
+    }
+  }, {
+    key: "valid",
+    get: function get() {
+      if (this.id) {
+        return true;
+      }
+      return false;
+    }
+  }, {
+    key: "id",
+    set: function set(v) {
+      if (v && typeof v === 'string' && v !== '') {
+        this._id = v;
+        return true;
+      } else {
+        return false;
+      }
+    },
+    get: function get() {
+      return this._id || null;
+    }
+  }], [{
+    key: "current",
+    value: function current(user) {
+      if (user) {
+        AppUserContext = user;
+        UserContext.store();
+        return AppUserContext;
+      } else {
+        if (!AppUserContext) {
+          AppUserContext = UserContext.load();
+        }
+        if (!AppUserContext) {
+          AppUserContext = new User();
+        }
+        return AppUserContext;
+      }
+    }
+  }, {
+    key: "fromContext",
+    value: function fromContext(data) {
+      var user = new User();
+      user.id = data._id;
+      user.data = new UserData(data.data);
+      user.push = new PushData(data.push.tokens);
+      user._fresh = data._fresh;
+      user._dirty = data._dirty;
+      return user;
+    }
+  }, {
+    key: "load",
+    value: function load(id) {
+      var deferred = new _promise.DeferredPromise();
+
+      var tempUser = new User();
+      tempUser.id = id;
+
+      if (!tempUser._blockLoad) {
+        tempUser._blockLoad = true;
+        new _request.APIRequest({
+          'uri': userAPIEndpoints.load(tempUser),
+          'method': 'GET',
+          'json': true,
+          'headers': {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        }).then(function (result) {
+          tempUser._blockLoad = false;
+          tempUser.logger.info('loaded user');
+
+          // set the custom data
+          tempUser.data = new UserData(result.payload.custom_data);
+
+          // set the push tokens
+          if (result.payload._push && result.payload._push.android_tokens) {
+            tempUser.push.tokens.android = result.payload._push.android_tokens;
+          }
+          if (result.payload._push && result.payload._push.ios_tokens) {
+            tempUser.push.tokens.ios = result.payload._push.ios_tokens;
+          }
+
+          tempUser.image = result.payload.image;
+          tempUser._fresh = false;
+
+          deferred.resolve(tempUser);
+        }, function (error) {
+          tempUser._blockLoad = false;
+          tempUser.logger.error(error);
+          deferred.reject(error);
+        });
+      } else {
+        tempUser.logger.info("a load operation is already in progress for " + this + ".");
+        deferred.reject(false);
+      }
+
+      return deferred.promise;
+    }
+  }, {
+    key: "anonymousId",
+    value: function anonymousId() {
+      // this is not guaranteed to be unique
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        var r = Math.random() * 16 | 0,
+            v = c == 'x' ? r : r & 0x3 | 0x8; //eslint-disable-line
+        return v.toString(16);
+      });
+    }
+  }]);
+
+  return User;
+})();
+
+exports.User = User;
+
+},{"./core":7,"./logger":10,"./promise":11,"./request":12,"./settings":13,"./storage":14}]},{},[11,12,9,10,14,13,7,15,6,8,5]);

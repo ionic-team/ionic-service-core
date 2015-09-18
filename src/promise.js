@@ -1,29 +1,25 @@
-(function() {
-  var ES6Promise = require("es6-promise").Promise;
+var ES6Promise = require("es6-promise").Promise;
 
-  class DeferredPromise {
-    constructor() {
-      var self = this;
-      this._update = false;
-      this.promise = new ES6Promise(function(resolve, reject) {
-        self.resolve = resolve;
-        self.reject = reject;
-      });
-      var originalThen = this.promise.then;
-      this.promise.then = function(ok, fail, update) {
-        self._update = update;
-        return originalThen.call(self.promise, ok, fail);
-      };
-    }
+export var Promise = ES6Promise;
 
-    notify(value) {
-      if (this._update && (typeof this._update === 'function')) {
-        this._update(value);
-      }
-    }
+export class DeferredPromise {
+  constructor() {
+    var self = this;
+    this._update = false;
+    this.promise = new ES6Promise(function(resolve, reject) {
+      self.resolve = resolve;
+      self.reject = reject;
+    });
+    var originalThen = this.promise.then;
+    this.promise.then = function(ok, fail, update) {
+      self._update = update;
+      return originalThen.call(self.promise, ok, fail);
+    };
   }
 
-  Ionic.namespace('IO', 'Promise', ES6Promise);
-  Ionic.namespace('IO', 'DeferredPromise', DeferredPromise);
-
-})();
+  notify(value) {
+    if (this._update && (typeof this._update === 'function')) {
+      this._update(value);
+    }
+  }
+}

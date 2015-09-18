@@ -9,14 +9,22 @@ var gulp = require('gulp'),
   babelify = require("babelify"),
   fs = require("fs"),
   eslint = require('gulp-eslint'),
-  replace = require('gulp-replace');
+  replace = require('gulp-replace'),
+  uglify = require('gulp-uglify'),
+  rename = require('gulp-rename');
 
 gulp.task('pre-build', function() {
   
 });
 
+
 gulp.task('post-build', function() {
-  
+  return gulp.src('dist/*.js')
+    .pipe(uglify())
+    .pipe(rename(function (path) {
+      path.basename += ".min";
+    }))
+    .pipe(gulp.dest('dist'));
 });
 
 gulp.task('build', [

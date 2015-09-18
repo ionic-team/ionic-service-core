@@ -4,6 +4,7 @@ import { Settings } from "./settings";
 import { IonicPlatform } from "./core";
 import { Storage } from "./storage";
 import { Logger } from "./logger";
+import { PushToken } from "../push/push-token";
 
 var Core = IonicPlatform;
 var AppUserContext = null;
@@ -392,6 +393,9 @@ export class User {
   }
 
   removePushToken(token) {
+    if (!(token instanceof PushToken)) {
+      token = new PushToken(token);
+    }
     return this.push.removeToken(token);
   }
 

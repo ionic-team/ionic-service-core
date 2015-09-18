@@ -8,16 +8,76 @@ var gulp = require('gulp'),
   browserify = require("browserify"),
   babelify = require("babelify"),
   fs = require("fs"),
-  eslint = require('gulp-eslint');
+  eslint = require('gulp-eslint'),
+  replace = require('gulp-replace');
 
-gulp.task('build', ['lint'], function () {
+gulp.task('pre-build', function() {
+  
+});
+
+gulp.task('post-build', function() {
+  
+});
+
+gulp.task('build', [
+  'pre-build',
+  'lint',
+  'build-core-module',
+  'build-push-module',
+  'build-deploy-module',
+  'build-analytics-module',
+  'build-bundle',
+  'post-build'
+]);
+
+gulp.task('build-core-module', ['lint'], function () {
   browserify({
-    entries: buildConfig.jsFiles,
+    entries: buildConfig.sourceFiles.core,
     debug: false,
     transform: [babelify]
   }).bundle()
   .on("error", function (err) { console.log("Error : " + err.message); })
-  .pipe(fs.createWriteStream("ionic-core.js"));
+  .pipe(fs.createWriteStream(buildConfig.dist + "/core.js"));
+});
+
+gulp.task('build-push-module', ['lint'], function () {
+  browserify({
+    entries: buildConfig.sourceFiles.push,
+    debug: false,
+    transform: [babelify]
+  }).bundle()
+  .on("error", function (err) { console.log("Error : " + err.message); })
+  .pipe(fs.createWriteStream(buildConfig.dist + "/push.js"));
+});
+
+gulp.task('build-deploy-module', ['lint'], function () {
+  browserify({
+    entries: buildConfig.sourceFiles.deploy,
+    debug: false,
+    transform: [babelify]
+  }).bundle()
+  .on("error", function (err) { console.log("Error : " + err.message); })
+  .pipe(fs.createWriteStream(buildConfig.dist + "/deploy.js"));
+});
+
+gulp.task('build-analytics-module', ['lint'], function () {
+  browserify({
+    entries: buildConfig.sourceFiles.analytics,
+    debug: false,
+    transform: [babelify]
+  }).bundle()
+  .on("error", function (err) { console.log("Error : " + err.message); })
+  .pipe(fs.createWriteStream(buildConfig.dist + "/analytics.js"));
+});
+
+gulp.task('build-bundle', ['lint'], function () {
+  browserify({
+    entries: buildConfig.sourceFiles.bundle,
+    debug: false,
+    transform: [babelify]
+  }).bundle()
+  .on("error", function (err) { console.log("Error : " + err.message); })
+  .pipe(fs.createWriteStream(buildConfig.dist + "/ionic.io.bundle.js"));
 });
 
 gulp.task('lint', function () {

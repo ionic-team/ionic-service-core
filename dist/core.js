@@ -2768,6 +2768,8 @@ var _storage = require("./storage");
 
 var _logger = require("./logger");
 
+var _pushPushToken = require("../push/push-token");
+
 var Core = _core.IonicPlatform;
 var AppUserContext = null;
 var settings = new _settings.Settings();
@@ -3098,6 +3100,9 @@ var User = (function () {
   }, {
     key: "removePushToken",
     value: function removePushToken(token) {
+      if (!(token instanceof _pushPushToken.PushToken)) {
+        token = new _pushPushToken.PushToken(token);
+      }
       return this.push.removeToken(token);
     }
   }, {
@@ -3230,4 +3235,43 @@ var User = (function () {
 
 exports.User = User;
 
-},{"./core":7,"./logger":10,"./promise":11,"./request":12,"./settings":13,"./storage":14}]},{},[11,12,9,10,14,13,7,15,6,8,5]);
+},{"../push/push-token":16,"./core":7,"./logger":10,"./promise":11,"./request":12,"./settings":13,"./storage":14}],16:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, '__esModule', {
+  value: true
+});
+
+var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
+
+var PushToken = (function () {
+  function PushToken(token) {
+    _classCallCheck(this, PushToken);
+
+    this._token = token || null;
+  }
+
+  _createClass(PushToken, [{
+    key: 'toString',
+    value: function toString() {
+      var token = this._token || 'null';
+      return '<PushToken [\'' + token + '\']>';
+    }
+  }, {
+    key: 'token',
+    set: function set(value) {
+      this._token = value;
+    },
+    get: function get() {
+      return this._token;
+    }
+  }]);
+
+  return PushToken;
+})();
+
+exports.PushToken = PushToken;
+
+},{}]},{},[11,12,9,10,14,13,7,15,6,8,5]);

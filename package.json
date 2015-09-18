@@ -24,7 +24,9 @@
     "globals": {
       "Ionic": true,
       "angular": true,
-      "Connection": true
+      "Connection": true,
+      "PushNotification": true,
+      "IonicDeploy": true
     },
     "env": {
       "browser": true,
@@ -89,6 +91,7 @@
     "gulp-footer": "^1.0.4",
     "gulp-header": "^1.0.2",
     "gulp-util": "^2.2.16",
-    "gulp-watch": "^0.6.5"
+    "gulp-watch": "^0.6.5",
+    "gulp-replace": "^0.5.4"
   }
 }

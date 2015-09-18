@@ -3,9 +3,12 @@ Changelog
 
 ## 0.2.0
 
-* New ES6 based build system
-* Replaced $ionicUser with a new interface that behaves like an expected model
-* Removed hard dependency on AngularJS
+* All Ionic platform service modules have been moved into this codebase (Push, Deploy, Analytics)
+* All of the modules have been rewritten in ES6 (distribution is still available as ES5)
+* Distribution files are now placed in the `dist` directory
+* AngularJS is now a provided integration rather than a hard dependency
+* Push and User have brand new APIs (see the docs for more information)
+* User is now a standard model object, you can access the previous behavior via `Ionic.User.current()`
 
 ## 0.1.0
 

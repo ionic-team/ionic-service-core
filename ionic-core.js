@@ -1861,37 +1861,35 @@ process.umask = function() { return 0; };
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"_process":3}],5:[function(require,module,exports){
+// Add Angular integrations if Angular is available
 'use strict';
 
-(function () {
-  // Add Angular integrations if Angular is available
-  if (typeof angular === 'object' && angular.module) {
-    angular.module('ionic.service.core', [])
+if (typeof angular === 'object' && angular.module) {
+  angular.module('ionic.service.core', [])
 
-    /**
-     * @private
-     * Provides a safe interface to store objects in persistent memory
-     */
-    .provider('persistentStorage', function () {
-      return {
-        '$get': [function () {
-          var storage = Ionic.getService('Storage');
-          if (!storage) {
-            storage = new Ionic.IO.Storage();
-            Ionic.addService('Storage', storage, true);
-          }
-          return storage;
-        }]
-      };
-    }).factory('$ionicCoreSettings', [function () {
-      return new Ionic.IO.Settings();
-    }]).factory('$ionicUser', [function () {
-      return Ionic.User;
-    }]).run([function () {
-      Ionic.io();
-    }]);
-  }
-})();
+  /**
+   * @private
+   * Provides a safe interface to store objects in persistent memory
+   */
+  .provider('persistentStorage', function () {
+    return {
+      '$get': [function () {
+        var storage = Ionic.getService('Storage');
+        if (!storage) {
+          storage = new Ionic.IO.Storage();
+          Ionic.addService('Storage', storage, true);
+        }
+        return storage;
+      }]
+    };
+  }).factory('$ionicCoreSettings', [function () {
+    return new Ionic.IO.Settings();
+  }]).factory('$ionicUser', [function () {
+    return Ionic.User;
+  }]).run([function () {
+    Ionic.io();
+  }]);
+}
 
 },{}],6:[function(require,module,exports){
 'use strict';
@@ -2224,9 +2222,7 @@ var _storage = require("./storage");
 var _user = require("./user");
 
 // Declare the window object
-if (typeof Ionic === 'undefined') {
-  window.Ionic = {};
-}
+window.Ionic = window.Ionic || {};
 
 // Ionic Namespace
 Ionic.Core = _core.IonicPlatform;

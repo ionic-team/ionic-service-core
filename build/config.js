@@ -12,17 +12,17 @@ module.exports = {
   dist: '.',
 
   jsFiles: [
-    'src/promise.js',
-    'src/request.js',
-    'src/events.js',
-    'src/logger.js',
-    'src/storage.js',
-    'src/settings.js',
-    'src/core.js',
-    'src/user.js',
-    'src/app.js',
-    'src/es5.js',
-    'src/angular-integration.js'
+    'src/core/promise.js',
+    'src/core/request.js',
+    'src/core/events.js',
+    'src/core/logger.js',
+    'src/core/storage.js',
+    'src/core/settings.js',
+    'src/core/core.js',
+    'src/core/user.js',
+    'src/core/app.js',
+    'src/core/es5.js',
+    'src/core/angular.js'
   ],
 
   versionData: {

@@ -10,7 +10,7 @@ import { User } from "./user";
 
 
 // Declare the window object
-if (typeof Ionic === 'undefined') { window.Ionic = {}; }
+window.Ionic = window.Ionic || {};
 
 // Ionic Namespace
 Ionic.Core = IonicPlatform;
